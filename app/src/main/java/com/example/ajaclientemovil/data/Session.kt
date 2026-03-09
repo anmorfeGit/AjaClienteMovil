@@ -8,7 +8,7 @@ import android.content.Context
  * recibidos del servidor (JSESSIONID y Rol).
  * * Cumple con el requisito del TEA2 de gestionar el estado de Login/Logout.
  */
-object SessionManager {
+object Session {
     private const val PREFS_NAME = "aja_session_prefs"
     private const val KEY_SESSION_ID = "jsession_id"
     private const val KEY_ROLE = "user_role"
