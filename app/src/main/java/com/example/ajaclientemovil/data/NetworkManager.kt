@@ -7,6 +7,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
+/**
+ * Esta clase gestiona la conexion con el servidor. Se encarga de realizar el login y el logout.
+ */
+
 object NetworkManager {
 
     private const val BASE_URL = "https://ajaserver.mel0n.dev/api/auth"
