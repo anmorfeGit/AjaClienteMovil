@@ -7,7 +7,7 @@ package com.example.ajaclientemovil.data
  */
 data class LoginDTO(
     val success: Boolean,
-    val user: UserEntityDTO
+    val message: UserEntityDTO
 )
 
 /**
