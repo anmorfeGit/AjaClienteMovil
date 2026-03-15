@@ -1,7 +1,6 @@
-package com.example.ajaclientemovil.data
+package com.example.ajaclientemovil.network
 
 import android.content.Context
-import android.content.SharedPreferences
 
 /**
  * Gestor de persistencia de sesión (JWT).

@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.ajaclientemovil.data.repository.UserRepository
+import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**

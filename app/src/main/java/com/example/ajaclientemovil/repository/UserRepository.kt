@@ -1,9 +1,9 @@
-package com.example.ajaclientemovil.data.repository
+package com.example.ajaclientemovil.repository
 
 import android.content.Context
 import com.example.ajaclientemovil.data.LoginDTO
-import com.example.ajaclientemovil.data.NetworkManager
-import com.example.ajaclientemovil.data.SessionManager
+import com.example.ajaclientemovil.network.NetworkManager
+import com.example.ajaclientemovil.network.SessionManager
 
 /**
  * Repositorio encargado de gestionar los datos de usuario y la persistencia de sesión.
@@ -21,7 +21,7 @@ class UserRepository(private val context: Context) {
      * 3. Persiste estos datos en el SessionManager para futuras consultas.
      * @param user Nombre de usuario introducido.
      * @param pass Contraseña introducida.
-     * @return [LoginDTO] con los datos del perfil si el login es correcto, o null en caso de fallo.
+     * @return [com.example.ajaclientemovil.data.LoginDTO] con los datos del perfil si el login es correcto, o null en caso de fallo.
      */
     suspend fun performLogin(user: String, pass: String): LoginDTO? {
         // Llamamos a la funcion login de NetworkManager.kt y alojamos en una variable el resultado.
