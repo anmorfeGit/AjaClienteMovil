@@ -1,89 +1,94 @@
 package com.example.ajaclientemovil.data
 
-import com.example.ajaclientemovil.data.network.AjaApiService
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
+import android.util.Log
+import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 
+/**
+ * Gestor central de comunicaciones de red.
+ * Implementa el protocolo de autenticación basado en JWT encapsulado en Cookies,
+ * siguiendo la implementación específica del servidor.
+ */
 object NetworkManager {
-    // La URL de producción de Alex
+
     private const val BASE_URL = "https://ajaserver.mel0n.dev"
+    private const val TAG = "NetworkManager"
 
     /**
-     * MÉTODO 1: Para certificados "legales" (Producción).
-     * OkHttp ya sabe manejar certificados válidos por defecto.
+     * Realiza la autenticación del usuario mediante POST (x-www-form-urlencoded).
+     * * Proceso técnico:
+     * 1. Envía credenciales codificadas en UTF-8.
+     * 2. Captura el token de la cabecera 'Set-Cookie' (formato JWT_TOKEN=...).
+     * 3. Deserializa el JSON de respuesta en un objeto [LoginDTO].
+     * * @return Un Pair con los datos del usuario y el token, o null si falla.
      */
-    private fun getSafeOkHttpClient(): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-        return OkHttpClient.Builder()
-            .addInterceptor(logging)
-            .build()
-    }
+    suspend fun login(user: String, pass: String): Pair<LoginDTO, String?>? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$BASE_URL/api/auth/login")
+            val conn = url.openConnection() as HttpURLConnection
 
-    /**
-     * MÉTODO 2: Ignorar certificados (Para local o errores de handshake).
-     * Es la traducción exacta del código que te ha pasado Alex a OkHttp.
-     */
-    private fun getUnsafeOkHttpClient(): OkHttpClient {
-        val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-        })
+            // Configuración de cabeceras para envío de formulario
+            conn.requestMethod = "POST"
+            conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+            conn.doOutput = true
 
-        val sslContext = SSLContext.getInstance("TLS")
-        sslContext.init(null, trustAllCerts, SecureRandom())
+            // Codificación de seguridad para caracteres especiales
+            val formData = "username=${URLEncoder.encode(user, "UTF-8")}&password=${URLEncoder.encode(pass, "UTF-8")}"
 
-        val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
+            // Escritura de datos en el cuerpo de la petición
+            conn.outputStream.use { it.write(formData.toByteArray()) }
 
-        return OkHttpClient.Builder()
-            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier { _, _ -> true }
-            .addInterceptor(logging)
-            .build()
-    }
+            Log.d(TAG, "Login Response Code: ${conn.responseCode}")
 
-    // --- CONFIGURACIÓN DE RETROFIT ---
+            if (conn.responseCode == 200) {
+                // EXTRACCIÓN DEL TOKEN
+                // El servidor envía el token dentro de la cabecera "Set-Cookie"
+                // en el formato: "JWT_TOKEN=xxx.yyy.zzz; Path=/; ..."
+                val cookieHeader = conn.headerFields["Set-Cookie"]
+                val token = cookieHeader?.firstOrNull { it.contains("JWT_TOKEN") }
+                    ?.split(";")?.get(0) // Obtenemos "JWT_TOKEN=xxx"
+                    ?.split("=")?.get(1) // Obtenemos solo el código "xxx"
 
-    // Cambia aquí: usa getSafeOkHttpClient() si el certificado de Alex va bien.
-    // Si te da error de SSL, cambia a getUnsafeOkHttpClient().
-    private val client = getUnsafeOkHttpClient()
+                // Lectura y traducción del JSON
+                val responseBody = conn.inputStream.bufferedReader().use { it.readText() }
+                val loginData = Gson().fromJson(responseBody, LoginDTO::class.java)
 
-    private val retrofit = Retrofit.Builder()
-        .baseUrl(BASE_URL)
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    val apiService: AjaApiService = retrofit.create(AjaApiService::class.java)
-
-    /**
-     * Función Login (Sin cambios, pero ahora segura gracias a TLS)
-     */
-    suspend fun login(user: String, pass: String): Pair<LoginDTO, String?>? {
-        return try {
-            val response = apiService.login(user, pass)
-            if (response.isSuccessful && response.body() != null) {
-                // Extracción del JWT del Header (Cookie)
-                val cookieHeader = response.headers()["Set-Cookie"]
-                val token = cookieHeader?.split(";")?.firstOrNull { it.contains("JWT_TOKEN") }
-                    ?.split("=")?.get(1)
-
-                Pair(response.body()!!, token)
-            } else null
+                return@withContext Pair(loginData, token)
+            }
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            Log.e(TAG, "Error en login: ${e.message}")
         }
+        null
+    }
+
+    /**
+     * Realiza peticiones GET autenticadas a recursos protegidos.
+     * * @param urlPath Ruta del endpoint (ej: "/api/user").
+     * @param token El JWT obtenido en el login.
+     * @return El cuerpo de la respuesta como String o null si hay error (403, 401, etc).
+     */
+    suspend fun getProtectedData(urlPath: String, token: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$BASE_URL$urlPath")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+
+            // INYECCIÓN DE CREDENCIALES
+            // Cumplimos el requisito del servidor: El token debe viajar como una Cookie
+            conn.setRequestProperty("Cookie", "JWT_TOKEN=$token")
+
+            if (conn.responseCode == 200) {
+                return@withContext conn.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                Log.e(TAG, "Acceso denegado o error: ${conn.responseCode}")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error de red: ${e.message}")
+        }
+        null
     }
 }
