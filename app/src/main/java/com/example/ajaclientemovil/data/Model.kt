@@ -1,28 +1,24 @@
 package com.example.ajaclientemovil.data
+
 /**
- * Objeto de transferencia de datos (DTO) que representa la respuesta global del servidor
- * tras un intento de autenticación.
- * * @property success Indica si las identificacion fue exitosa.
- * * @property user Contiene la información detallada del usuario si el login es correcto.
+ * DTO para la respuesta del Login.
+ * @param success Indica si la operación fue exitosa.
+ * @param message Campo dinámico:
+ * - Si success es true: Contiene un objeto (UserEntityDTO).
+ * - Si success es false: Contiene un String con el error.
  */
 data class LoginDTO(
     val success: Boolean,
-    val message: UserEntityDTO
+    val message: Any?
 )
 
 /**
- * Representa la entidad de usuario dentro del sistema AJA.
- * * @property id Indica la id de la BBDD.
- * * @property username Nombre de usuario
- * * @property role Define los permisos del usuario (ej: "ADMIN", "USER").
- * * @property email Email del usuario
- * * @property isActive Indica si el usuario esta activo o no, pensado para desabilitar usuarios
- * en la parte del servidor.
+ * DTO con la estructura del usuario para mapeo manual.
  */
 data class UserEntityDTO(
     val id: Long,
     val username: String,
     val email: String,
-    val role: String, // "ADMIN" o "USER"
-    val isActive: Boolean
+    val role: String,
+    val active: Boolean
 )

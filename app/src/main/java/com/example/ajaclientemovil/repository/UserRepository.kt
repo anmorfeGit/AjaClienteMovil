@@ -2,6 +2,7 @@ package com.example.ajaclientemovil.repository
 
 import android.content.Context
 import com.example.ajaclientemovil.data.LoginDTO
+import com.example.ajaclientemovil.data.UserEntityDTO
 import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
 
@@ -23,33 +24,17 @@ class UserRepository(private val context: Context) {
      * @param pass Contraseña introducida.
      * @return [com.example.ajaclientemovil.data.LoginDTO] con los datos del perfil si el login es correcto, o null en caso de fallo.
      */
-    suspend fun performLogin(user: String, pass: String): LoginDTO? {
-        // Llamamos a la funcion login de NetworkManager.kt y alojamos en una variable el resultado.
-        val resultado = NetworkManager.login(user, pass)
+    suspend fun performLogin(user: String, pass: String): Result<UserEntityDTO> {
+        val (userDto, error, token) = NetworkManager.login(user, pass)
 
-        /* Si el resultado no es nulo, significa que el servidor ha devuelto una respuesta.
-        Se utiliza la desestructuración de objetos Pair para asignar de forma simultánea tanto el
-        objeto de respuesta DTO como el identificador de sesión.
-        */
-        if (resultado != null) {
-            val (loginData, token) = resultado
-
-            if (loginData.success) {
-                /* Si loginData.success es true, significa que el login ha sido exitoso.
-                Se llama a la función saveSession de SessionManager.kt para guardar los datos
-                de sesión en el almacenamiento local.
-                 */
-                SessionManager.saveSession(
-                    context = context,
-                    token = token,
-                    role = loginData.message.role,
-                    username = loginData.message.username
-                )
-                return loginData
-            }
+        return if (userDto != null && token != null) {
+            // Si el login es exitoso (success: true), persistimos la sesión
+            SessionManager.saveSession(context, token, userDto)
+            Result.success(userDto)
+        } else {
+            // Si falla, devolvemos el error (el String que Alex manda en 'message')
+            Result.failure(Exception(error ?: "Error desconocido"))
         }
-        // Si llegamos aquí, algo ha fallado (red, contraseña mal, etc.).
-        return null
     }
 
     /**

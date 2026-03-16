@@ -35,42 +35,26 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Procesa el intento de inicio de sesión.
-     * * @param user Nombre de usuario capturado en el TextField.
+     * @param user Nombre de usuario capturado en el TextField.
      * @param pass Contraseña capturada en el TextField.
      * @param onSuccess Callback que se ejecuta cuando el login es correcto para navegar al Home.
      */
     fun onLoginClicked(user: String, pass: String, onSuccess: () -> Unit) {
-        // 1. Validaciones básicas antes de llamar a red
-        if (user.isBlank() || pass.isBlank()) {
-            errorMessage = "Por favor, rellena todos los campos"
-            return
-        }
-
-        // 2. Iniciamos el estado de carga y limpiamos errores previos
-        isLoading = true
-        errorMessage = null
-
-        // 3. Lanzamos una corrutina en el ámbito del ViewModel
-        // Esto permite que la petición a Internet no congele la pantalla.
         viewModelScope.launch {
-            try {
-                // Llamamos al repositorio (nuestro almacén de datos)
-                val response = userRepository.performLogin(user, pass)
+            isLoading = true
+            errorMessage = null
 
-                if (response != null && response.success) {
-                    // Si ha ido bien, ejecutamos la función callback
-                    onSuccess()
-                } else {
-                    // Si el servidor dice que no son válidos, mostramos el mensaje que nos devuelve, en caso contrario mostramos un mensaje genérico.
-                    errorMessage = (response?.message) as String? ?: "Error desconocido. Inténtalo de nuevo."
-                }
-            } catch (e: Exception) {
-                // Si hay un error de red (sin internet, servidor caído...)
-                errorMessage = "No se pudo conectar con el servidor."
-            } finally {
-                // Pase lo que pase, al final dejamos de cargar
-                isLoading = false
+            // Llamada al repositorio
+            val result = userRepository.performLogin(user, pass)
+
+            result.onSuccess {
+                onSuccess()
             }
+            result.onFailure { exception ->
+                // Aquí capturamos el mensaje dinámico que extrajo el NetworkManager
+                errorMessage = exception.message
+            }
+            isLoading = false
         }
     }
 

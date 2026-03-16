@@ -1,6 +1,7 @@
 package com.example.ajaclientemovil.network
 
 import android.content.Context
+import com.example.ajaclientemovil.data.UserEntityDTO
 
 /**
  * Gestor de persistencia de sesión (JWT).
@@ -21,17 +22,14 @@ object SessionManager {
      * Guarda la sesión tras un login exitoso.
      * @param context Contexto de la actividad o aplicación.
      * @param token El JWT recibido en la cabecera Set-Cookie del servidor.
-     * @param role El rol del usuario (ADMIN/USER) extraído del LoginDTO.
+     * @param user El objeto UserEntityDTO que contiene el nombre de usuario y el rol.
      */
-    fun saveSession(context: Context, token: String?, role: String, username: String) {
-        val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        with(sharedPref.edit()) {
-            // Guardamos el token, el rol y el username en el archivo de preferencias.
-            putString(KEY_JWT_TOKEN, token)
-            putString(KEY_USER_ROLE, role)
-            putString(KEY_USERNAME, username)
-            apply()
-        }
+    fun saveSession(context: Context, token: String, user: UserEntityDTO) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        prefs.putString(KEY_JWT_TOKEN, token)
+        prefs.putString(KEY_USERNAME, user.username)
+        prefs.putString(KEY_USER_ROLE, user.role)
+        prefs.apply()
     }
 
     /**

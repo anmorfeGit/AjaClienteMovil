@@ -1,6 +1,7 @@
 package com.example.ajaclientemovil.network
 
 import com.example.ajaclientemovil.data.LoginDTO
+import com.example.ajaclientemovil.data.UserEntityDTO
 import com.example.ajaclientemovil.data.network.AjaApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -11,6 +12,8 @@ import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import com.google.gson.Gson
+import org.json.JSONObject
 
 /**
  * Cliente de red centralizado para la aplicación AJA.
@@ -58,7 +61,7 @@ object NetworkManager {
      * Se utiliza el cliente "Unsafe" para garantizar la conexión con el servidor de desarrollo.
      */
     private val client = getUnsafeOkHttpClient()
-
+    private val gson = Gson()
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(client)
@@ -72,27 +75,46 @@ object NetworkManager {
      * Realiza la petición de autenticación.
      * A diferencia de una API REST estándar, el servidor de Alex envía el JWT
      * dentro de una cabecera 'Set-Cookie' en lugar de un campo en el JSON.
-     * * @param user Nombre de usuario.
+     * @param user Nombre de usuario.
      * @param pass Contraseña.
-     * @return Par con el DTO de respuesta y el Token extraído, o null en caso de error.
+     * @return Retorna un Triple con los siguientes valores:
+     * 1. UserEntityDTO: Si el login es correcto, contiene los datos del usuario, sino devuelve null.
+     * 2. String: Si el login es incorrecto, contiene el mensaje de error, sino devuelve null.
+     * 3. String: Si el login es correcto, contiene el token JWT, sino devuelve null.
      */
-    suspend fun login(user: String, pass: String): Pair<LoginDTO, String?>? {
+
+
+    suspend fun login(user: String, pass: String): Triple<UserEntityDTO?, String?, String?> {
         return try {
             val response = apiService.login(user, pass)
+            val body = response.body()
 
-            if (response.isSuccessful && response.body() != null) {
-                // Buscamos la cookie que contiene el JWT_TOKEN
-                val cookieHeader = response.headers()["Set-Cookie"]
-                val token = cookieHeader?.split(";")?.firstOrNull { it.contains("JWT_TOKEN") }
-                    ?.split("=")?.get(1)
+            if (response.isSuccessful && body != null) {
+                if (body.success) {
+                    // LOGIN EXITOSO
+                    val cookieHeader = response.headers()["Set-Cookie"]
+                    val token = cookieHeader?.split(";")?.firstOrNull { it.contains("JWT_TOKEN") }
+                        ?.split("=")?.get(1)
 
-                Pair(response.body()!!, token)
+                    // Conversión manual de Any a UserEntityDTO usando el estándar del servidor
+                    val jsonUser = gson.toJson(body.message)
+                    val userDto = gson.fromJson(jsonUser, UserEntityDTO::class.java)
+
+                    Triple(userDto, null, token)
+                } else {
+                    // ERROR CONTROLADO (Usuario no existe, etc.)
+                    // Según el estándar del servidor, si success es false, message es String.
+                    Triple(null, body.message.toString(), null)
+                }
             } else {
-                null
+                // ERROR HTTP (401, 500...)
+                val errorMsg = response.errorBody()?.string()?.let {
+                    JSONObject(it).optString("message", "Error de autenticación")
+                } ?: "Error en el servidor"
+                Triple(null, errorMsg, null)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            Triple(null, "Fallo de conexión: ${e.localizedMessage}", null)
         }
     }
     /**
