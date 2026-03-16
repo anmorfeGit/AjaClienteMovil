@@ -83,16 +83,23 @@ fun HomeScreen(
             // Botón central de Logout (más visible para testear)
             Button(
                 onClick = {
-                    viewModel.onLogoutClicked {
-                        onNavigateToLogin()
+                    viewModel.onLogoutClicked() { // Pasamos el contexto si el VM lo necesita
+                        onLogoutSuccess() // <--- USAMOS EL NOMBRE DEL PARÁMETRO CORRECTO
                     }
                 },
-                enabled = !viewModel.isLoading // Deshabilitar si está cargando
+                enabled = !viewModel.isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 if (viewModel.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onError
+                    )
                 } else {
-                    Text("Cerrar Sesión")
+                    Text("CERRAR SESIÓN")
                 }
             }
         }
