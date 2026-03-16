@@ -61,8 +61,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                     // Si ha ido bien, ejecutamos la función callback
                     onSuccess()
                 } else {
-                    // Si el servidor dice que no son válidos
-                    errorMessage = "Credenciales incorrectas. Inténtalo de nuevo."
+                    // Si el servidor dice que no son válidos, mostramos el mensaje que nos devuelve, en caso contrario mostramos un mensaje genérico.
+                    errorMessage = (response?.message) as String? ?: "Error desconocido. Inténtalo de nuevo."
                 }
             } catch (e: Exception) {
                 // Si hay un error de red (sin internet, servidor caído...)

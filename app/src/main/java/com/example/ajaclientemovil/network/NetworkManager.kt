@@ -95,4 +95,30 @@ object NetworkManager {
             null
         }
     }
+    /**
+     * Realiza la desconexión del usuario de forma sincronizada con el servidor.
+     * * Esta función es de tipo 'suspend' para no bloquear el hilo principal de la UI
+     * durante la petición de red. Envía una solicitud POST al endpoint de logout
+     * para que el servidor de Spring Boot (AuthController) invalide la sesión
+     * (JSESSIONID) en el backend.
+     * * @return Boolean: 'true' si el servidor confirmó el cierre de sesión,
+     * 'false' en caso de error de red o credenciales inválidas.
+     */
+    suspend fun logout(): Boolean {
+        return try {
+            // Ejecución de la llamada POST /api/auth/logout definida en AjaApiService
+            val response = apiService.logout()
+
+            if (response.isSuccessful) {
+                // Se verifica que el diccionario de respuesta contenga success: true
+                response.body()?.get("success") == true
+            } else {
+                // Manejo de errores de protocolo (ej: 401 Unauthorized o 500 Server Error)
+                false
+            }
+        } catch (e: Exception) {
+            // Captura de excepciones críticas (pérdida de conexión, timeout, etc.)
+            false
+        }
+    }
 }

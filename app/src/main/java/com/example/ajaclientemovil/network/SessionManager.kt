@@ -73,4 +73,14 @@ object SessionManager {
     fun isUserLoggedIn(context: Context): Boolean {
         return getToken(context) != null
     }
+    /**
+     * Recupera el nombre de usuario guardado.
+     * Devuelve un String vacío si no existe para evitar errores en la UI.
+     */
+    fun getUsername(context: Context): String {
+        val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return sharedPref.getString(KEY_USERNAME, null) ?: ""
+    }
+
+
 }

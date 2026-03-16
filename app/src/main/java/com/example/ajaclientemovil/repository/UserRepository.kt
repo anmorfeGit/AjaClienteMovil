@@ -53,10 +53,23 @@ class UserRepository(private val context: Context) {
     }
 
     /**
-     * Ejecuta el cierre de sesión del usuario.
-     * * Borra todos los rastros de la sesión actual en el dispositivo.
+     * Realiza el cierre de sesión seguro del usuario.
+     * * El proceso sigue una estrategia de "limpieza doble":
+     * 1. Invalidación Remota: Envía una petición POST al endpoint /api/auth/logout
+     * para que el servidor destruya la sesión activa (JSESSIONID) en el backend.
+     * 2. Limpieza Local: Elimina los tokens, roles y datos de usuario almacenados
+     * en las SharedPreferences a través del SessionManager.
+     * * Se utiliza el modificador 'suspend' para asegurar que la llamada de red no
+     * bloquee el hilo principal de la interfaz de usuario (UI Thread).
      */
-    fun logout() {
+    suspend fun performLogout() {
+        // 1. Intentamos invalidar en el servidor (POST /api/auth/logout)
+        // Es vital informar al servidor para que la cookie deje de ser válida.
+        NetworkManager.logout()
+
+        // 2. Limpiamos localmente pase lo que pase
+        // Aunque la red falle, debemos asegurar que el usuario no pueda
+        // seguir navegando por la app localmente.
         SessionManager.clearSession(context)
     }
 
