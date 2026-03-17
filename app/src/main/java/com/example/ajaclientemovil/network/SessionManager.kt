@@ -17,6 +17,9 @@ object SessionManager {
     private const val KEY_JWT_TOKEN = "jwt_token"
     private const val KEY_USER_ROLE = "user_role"
     private const val KEY_USERNAME = "username"
+    private const val KEY_EMAIL = "email"
+
+
 
     /**
      * Guarda la sesión tras un login exitoso.
@@ -29,6 +32,7 @@ object SessionManager {
         prefs.putString(KEY_JWT_TOKEN, token)
         prefs.putString(KEY_USERNAME, user.username)
         prefs.putString(KEY_USER_ROLE, user.role)
+        prefs.putString(KEY_EMAIL, user.email)
         prefs.apply()
     }
 
@@ -79,6 +83,13 @@ object SessionManager {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPref.getString(KEY_USERNAME, null) ?: ""
     }
+
+    fun getEmail(context: Context): String {
+        val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return sharedPref.getString(KEY_EMAIL, null) ?: ""
+    }
+
+
 
 
 }

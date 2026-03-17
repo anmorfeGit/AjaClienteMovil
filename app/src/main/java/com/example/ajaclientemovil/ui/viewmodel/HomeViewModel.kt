@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ajaclientemovil.data.UserEntityDTO
+import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
 
@@ -13,17 +15,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepository = UserRepository(application)
 
-    // Estado para controlar el indicador de carga durante el logout
+    // Datos del usuario actual para la UI
+    var username by mutableStateOf(SessionManager.getUsername(application))
+    var userRole by mutableStateOf(SessionManager.getRole(application))
+
+    // Estado para la lista de usuarios (solo para ADMIN)
+    var userList by mutableStateOf<List<UserEntityDTO>>(emptyList())
     var isLoading by mutableStateOf(false)
-        private set
+    var errorMessage by mutableStateOf<String?>(null)
 
-    // Estado para el nombre de usuario (puedes mostrarlo en la Home)
-    var username by mutableStateOf("")
-        private set
-
-    init {
-        // Al iniciar, podríamos cargar datos del usuario si fuera necesario
-        //username = userRepository.getCurrentUsername() ?: "Usuario"
+    fun fetchUsers() {
+        viewModelScope.launch {
+            isLoading = true
+            userRepository.getAllUsers()
+                .onSuccess { list -> userList = list }
+                .onFailure { e -> errorMessage = e.message }
+            isLoading = false
+        }
     }
 
     /**

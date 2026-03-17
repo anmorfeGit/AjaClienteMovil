@@ -8,6 +8,8 @@ import androidx.navigation.compose.rememberNavController
 import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.ui.screens.HomeScreen
 import com.example.ajaclientemovil.ui.screens.LoginScreen
+import com.example.ajaclientemovil.ui.screens.MyProfileScreen
+import com.example.ajaclientemovil.ui.screens.UserListScreen
 
 /**
  * Grafo de navegación principal de la aplicación.
@@ -29,6 +31,7 @@ fun AppNavigation(context: Context) {
         navController = navController,
         startDestination = startDestination
     ) {
+        // --- PANTALLA LOGIN ---
         composable(Screen.Login.route) {
             LoginScreen(
                 onLoginSuccess = {
@@ -39,15 +42,38 @@ fun AppNavigation(context: Context) {
             )
         }
 
+        // --- PANTALLA HOME ---
         composable(Screen.Home.route) {
-            // Pasamos la acción de navegación al HomeScreen
             HomeScreen(
                 onLogoutSuccess = {
-                    // Importante: Al volver al Login, "limpiamos" el Home del historial
+                    // Acción para cerrar sesión
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Home.route) { inclusive = true }
                     }
+                },
+                onNavigateToUserList = {
+                    // Acción para ir a la lista de usuarios
+                    navController.navigate(Screen.UserList.route)
+                },
+
+                onNavigateToProfile = {
+                    // Acción para ir a la pantalla de perfil
+                    navController.navigate(Screen.MyProfile.route)
                 }
+            )
+        }
+
+        // --- PANTALLA LISTA DE USUARIOS (Solo Admin) ---
+        composable(Screen.UserList.route) {
+            // Aquí puedes llamar a la nueva pantalla que creamos antes
+            UserListScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+        // --- PANTALLA MIS DATOS ---
+        composable(Screen.MyProfile.route) {
+            MyProfileScreen(
+                onBack = { navController.popBackStack() }
             )
         }
     }

@@ -8,7 +8,7 @@ package com.example.ajaclientemovil.ui.navigation
 sealed class Screen(val route: String) {
     object Login : Screen("login_screen")
     object Home : Screen("home_screen")
+    object UserList : Screen("user_list")
+    object MyProfile : Screen("my_profile")
 
-    // Ejemplo de cómo añadir futuras pantallas (ej. Foro)
-    // object Forum : Screen("forum_screen")
 }
