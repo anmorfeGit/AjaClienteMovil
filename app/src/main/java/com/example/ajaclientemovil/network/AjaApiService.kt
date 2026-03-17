@@ -1,9 +1,12 @@
 package com.example.ajaclientemovil.data.network
 
 import com.example.ajaclientemovil.data.LoginDTO
+import com.example.ajaclientemovil.data.UserListDTO
 import retrofit2.Response
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
+import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 
 /**
@@ -38,4 +41,16 @@ interface AjaApiService {
      */
     @POST("/api/auth/logout")
     suspend fun logout(): Response<Map<String, Any>>
+
+    /**
+     * Obtiene la lista completa de usuarios registrados en el sistema.
+     * @param authCookie Cadena que contiene el JWT en formato "JWT_TOKEN=valor".
+     * @return Objeto UserListDTO que contiene el flag de éxito y la lista de usuarios.
+     * * NOTA DE SEGURIDAD: Este endpoint requiere que el JWT sea válido y
+     * que el usuario tenga permisos suficientes (según la lógica del backend).
+     */
+    @GET("api/user")
+    suspend fun getAllUsers(
+        @Header("Cookie") authCookie: String
+    ): Response<UserListDTO>
 }
