@@ -1,8 +1,7 @@
 package com.example.ajaclientemovil.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.*
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -14,83 +13,78 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ajaclientemovil.network.SessionManager
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Pantalla de visualización del perfil del usuario logueado.
+ * * Extrae la información de sesión persistida en SharedPreferences.
+ */
 @Composable
-fun MyProfileScreen(
-    onBack: () -> Unit
-) {
+fun MyProfileScreen() {
     val context = LocalContext.current
 
-    // Recuperamos los datos que guardamos en SessionManager al hacer login
+    // Recuperamos los datos locales guardados tras el login exitoso
     val username = SessionManager.getUsername(context)
     val role = SessionManager.getRole(context) ?: "Usuario"
     val email = SessionManager.getEmail(context) ?: "No disponible"
 
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Mis Datos") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-            )
-        }
-    ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Cabecera visual de perfil
+        Icon(
+            imageVector = Icons.Default.AccountCircle,
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Tarjeta contenedora de datos personales (Estética Material3)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            )
         ) {
-            // Icono de perfil grande
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                modifier = Modifier.size(120.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Tarjeta de información
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    ProfileItem(label = "Nombre de Usuario", value = username)
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileItem(label = "Rol del Sistema", value = role)
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                    ProfileItem(label = "Dirección de Email", value = email)
-                }
+            Column(modifier = Modifier.padding(20.dp)) {
+                ProfileItem(label = "Nombre de Usuario", value = username)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                ProfileItem(label = "Rol del Sistema", value = role)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                ProfileItem(label = "Dirección de Email", value = email)
             }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Botón informativo o de edición futura
-            Text(
-                text = "Datos vinculados a la sesión actual",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray
-            )
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Pie de página informativo
+        Text(
+            text = "Información obtenida de la sesión actual",
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.Gray
+        )
     }
 }
 
+/**
+ * Componente reutilizable para mostrar un par etiqueta-valor en el perfil.
+ */
 @Composable
 fun ProfileItem(label: String, value: String) {
     Column {
-        Text(text = label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-        Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
     }
 }

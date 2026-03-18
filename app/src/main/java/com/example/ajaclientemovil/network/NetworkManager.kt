@@ -1,6 +1,5 @@
 package com.example.ajaclientemovil.network
 
-import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.UserEntityDTO
 import com.example.ajaclientemovil.data.network.AjaApiService
 import okhttp3.OkHttpClient

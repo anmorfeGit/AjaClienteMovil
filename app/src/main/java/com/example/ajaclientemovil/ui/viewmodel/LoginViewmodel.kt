@@ -31,6 +31,15 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
+    /**
+     * FUNCIÓN VALIDACION: Valida que los campos no estén vacíos antes de intentar el login.
+     * @param user Nombre de usuario capturado en el TextField.
+     * @param pass Contraseña capturada en el TextField.
+     */
+    fun validateFields(user: String, pass: String): Boolean {
+        return user.trim().isNotEmpty() && pass.trim().isNotEmpty()
+    }
+
     // --- LÓGICA DE NEGOCIO ---
 
     /**
@@ -40,6 +49,12 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      * @param onSuccess Callback que se ejecuta cuando el login es correcto para navegar al Home.
      */
     fun onLoginClicked(user: String, pass: String, onSuccess: () -> Unit) {
+        // Validación previa (Local)
+        if (!validateFields(user, pass)) {
+            errorMessage = "Por favor, rellena todos los campos"
+            return
+        }
+
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
