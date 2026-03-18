@@ -38,6 +38,7 @@ fun UserListScreen(viewModel: HomeViewModel= viewModel(), onBack: () -> Unit ) {
                     ListItem(
                         headlineContent = { Text(user.username) },
                         supportingContent = { Text(user.email) },
+                        //overlineContent = { Text(if(user.isActive) "Activo" else "Inactivo") },
                         trailingContent = {
                             Text(
                                 text = user.role,
@@ -46,9 +47,9 @@ fun UserListScreen(viewModel: HomeViewModel= viewModel(), onBack: () -> Unit ) {
                         },
                         leadingContent = {
                             Icon(
-                                imageVector = if (user.active) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                imageVector = if (user.isActive) Icons.Default.CheckCircle else Icons.Default.Warning,
                                 contentDescription = null,
-                                tint = if (user.active) Color.Green else Color.Gray
+                                tint = if (user.isActive) Color.Green else Color.Gray
                             )
                         }
                     )

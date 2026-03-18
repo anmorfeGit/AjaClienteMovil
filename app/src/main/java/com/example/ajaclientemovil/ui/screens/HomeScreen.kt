@@ -3,6 +3,7 @@ package com.example.ajaclientemovil.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
@@ -92,6 +93,11 @@ fun HomeScreen(
                         )
                     },
                     navigationIcon = {
+                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menú foros")
+                        }
+                    },
+                    actions = {
                         Box {
                             IconButton(onClick = { showProfileMenu = true }) {
                                 Icon(
@@ -136,17 +142,12 @@ fun HomeScreen(
 
                                 DropdownMenuItem(
                                     text = { Text("Cerrar Sesión") },
-                                    leadingIcon = { Icon(Icons.Default.ExitToApp, null, tint = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, null, tint = MaterialTheme.colorScheme.error) },
                                     onClick = {
                                         viewModel.onLogoutClicked { onLogoutSuccess() }
                                     }
                                 )
                             }
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú foros")
                         }
                     },
                     // ESTÉTICA: Forzamos los colores de la barra

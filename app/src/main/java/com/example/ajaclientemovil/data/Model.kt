@@ -18,14 +18,14 @@ data class LoginDTO(
  * @param username Nombre de usuario.
  * @param email Dirección de correo electrónico.
  * @param role Rol del usuario (ADMIN o USER).
- * @param active Indica si el usuario está activo.
+ * @param isActive Indica si el usuario está activo.
  */
 data class UserEntityDTO(
     val id: Long,
     val username: String,
     val email: String,
     val role: String,
-    val active: Boolean
+    val isActive: Boolean
 )
 
 /**
