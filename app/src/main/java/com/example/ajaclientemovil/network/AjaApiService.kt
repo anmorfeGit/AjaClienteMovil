@@ -34,10 +34,6 @@ interface AjaApiService {
     /**
      * Realiza una petición de cierre de sesión en el servidor.
      * @return Una respuesta que contiene un mapa con el estado de la operación (success/message).
-     * * Nota técnica: Al usar @POST en la ruta "/api/auth/logout", el servidor invalida la
-     * sesión vinculada a la Cookie (JSESSIONID) enviada automáticamente en la cabecera
-     * por el cliente OkHttp. No requiere parámetros de cuerpo ya que la identificación
-     * se basa en el estado de la sesión en el servidor.
      */
     @POST("/api/auth/logout")
     suspend fun logout(): Response<Map<String, Any>>
@@ -46,8 +42,6 @@ interface AjaApiService {
      * Obtiene la lista completa de usuarios registrados en el sistema.
      * @param authCookie Cadena que contiene el JWT en formato "JWT_TOKEN=valor".
      * @return Objeto UserListDTO que contiene el flag de éxito y la lista de usuarios.
-     * * NOTA DE SEGURIDAD: Este endpoint requiere que el JWT sea válido y
-     * que el usuario tenga permisos suficientes (según la lógica del backend).
      */
     @GET("api/user")
     suspend fun getAllUsers(

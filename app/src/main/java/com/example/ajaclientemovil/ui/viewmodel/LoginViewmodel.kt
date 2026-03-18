@@ -12,8 +12,7 @@ import kotlinx.coroutines.launch
 /**
  * ViewModel encargado de gestionar la lógica de negocio de la pantalla de Login.
  * * Actúa como puente entre la interfaz (UI) y el repositorio de datos (UserRepository).
- * * Utiliza [mutableStateOf] para que la interfaz de Compose reaccione automáticamente
- * a los cambios de estado (carga, errores, éxito).
+ * * Utiliza el patrón de arquitectura MVVM.
  * * @param application Referencia al contexto de la aplicación necesaria para el repositorio.
  */
 class LoginViewModel(application: Application) : AndroidViewModel(application) {

@@ -40,9 +40,8 @@ class UserRepository(private val context: Context) {
 
     /**
      * Realiza el cierre de sesión seguro del usuario.
-     * * El proceso sigue una estrategia de "limpieza doble":
      * 1. Invalidación Remota: Envía una petición POST al endpoint /api/auth/logout
-     * para que el servidor destruya la sesión activa (JSESSIONID) en el backend.
+     * para que el servidor destruya la sesión del usuario.
      * 2. Limpieza Local: Elimina los tokens, roles y datos de usuario almacenados
      * en las SharedPreferences a través del SessionManager.
      * * Se utiliza el modificador 'suspend' para asegurar que la llamada de red no

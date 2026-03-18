@@ -22,7 +22,8 @@ object SessionManager {
 
 
     /**
-     * Guarda la sesión tras un login exitoso.
+     * Guarda la sesión tras un login exitoso. Usa MODE_PRIVATE para mantener
+     * la privacidad de los datos.
      * @param context Contexto de la actividad o aplicación.
      * @param token El JWT recibido en la cabecera Set-Cookie del servidor.
      * @param user El objeto UserEntityDTO que contiene el nombre de usuario y el rol.
@@ -88,8 +89,6 @@ object SessionManager {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPref.getString(KEY_EMAIL, null) ?: ""
     }
-
-
 
 
 }

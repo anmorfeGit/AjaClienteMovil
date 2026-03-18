@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
  * Componente central de navegación y estructura base de la aplicación.
  * El scaffold y el drawer estan presentes en todas las pantallas salvo en el login.
  * Para evitar tener que repetir el mismo codigo en cada pantalla que se vaya creando,
- * he metido la estructura base en el componente AppNavigation. *
+ * se ha diseñado la estructura base en el componente AppNavigation. *
  * * @param context Contexto de la aplicación necesario para interactuar con las SharedPreferences.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +83,7 @@ fun AppNavigation(context: Context) {
                             else -> "AJA"
                         },
                         username = homeViewModel.username,
-                        isAdmin = homeViewModel.userRole == "ADMIN",
+                        isAdmin = (homeViewModel.userRole == "ADMIN"),
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onProfileClick = { navController.navigate(Screen.MyProfile.route) },
                         onAdminClick = { navController.navigate(Screen.UserList.route) },
@@ -108,6 +108,7 @@ fun AppNavigation(context: Context) {
                 ) {
                     composable(Screen.Login.route) {
                         LoginScreen(onLoginSuccess = {
+                            homeViewModel.refreshSessionData()
                             navController.navigate(Screen.Home.route) {
                                 popUpTo(Screen.Login.route) { inclusive = true }
                             }
@@ -184,7 +185,6 @@ fun GlobalTopBar(
                 }
             }
         },
-        // Estilización corporativa
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.primary,
             titleContentColor = Color.White,

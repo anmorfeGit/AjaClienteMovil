@@ -23,7 +23,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             AjaClienteMovilTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    // Solo llamamos a nuestra clase de navegación
                     AppNavigation(context = this)
                 }
             }

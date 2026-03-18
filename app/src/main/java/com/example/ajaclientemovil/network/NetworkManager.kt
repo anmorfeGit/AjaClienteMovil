@@ -23,7 +23,7 @@ import org.json.JSONObject
  * 3. Gestión manual de Cookies para compatibilidad con el JWT del servidor.
  */
 object NetworkManager {
-    // URL base del servidor de Alex con protocolo seguro
+    // URL base del servidor
     private const val BASE_URL = "https://ajaserver.mel0n.dev"
 
     /**
@@ -72,7 +72,7 @@ object NetworkManager {
 
     /**
      * Realiza la petición de autenticación.
-     * A diferencia de una API REST estándar, el servidor de Alex envía el JWT
+     * A diferencia de una API REST estándar, el servidor envía el JWT
      * dentro de una cabecera 'Set-Cookie' en lugar de un campo en el JSON.
      * @param user Nombre de usuario.
      * @param pass Contraseña.
@@ -117,11 +117,10 @@ object NetworkManager {
         }
     }
     /**
-     * Realiza la desconexión del usuario de forma sincronizada con el servidor.
+     * Realiza la desconexión del usuario con el servidor.
      * * Esta función es de tipo 'suspend' para no bloquear el hilo principal de la UI
      * durante la petición de red. Envía una solicitud POST al endpoint de logout
-     * para que el servidor de Spring Boot (AuthController) invalide la sesión
-     * (JSESSIONID) en el backend.
+     * para que el servidor invalide la sesion del usuario.
      * * @return Boolean: 'true' si el servidor confirmó el cierre de sesión,
      * 'false' en caso de error de red o credenciales inválidas.
      */

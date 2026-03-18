@@ -11,6 +11,12 @@ import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
 
+/**
+ * ViewModel encargado de gestionar la lógica de negocio de la pantalla principal y la administración.
+ * * Sigue el patrón arquitectónico MVVM, actuando como puente entre el UserRepository
+ * y las pantallas de la interfaz de usuario (Compose).
+ * * @param application Referencia al contexto de la aplicación para acceso a recursos y sesión.
+ */
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val userRepository = UserRepository(application)
@@ -24,6 +30,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
 
+    /**
+     * Solicita al repositorio el listado completo de usuarios registrados.
+     * * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
     fun fetchUsers() {
         viewModelScope.launch {
             isLoading = true
@@ -55,6 +66,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 isLoading = false
             }
         }
+    }
+
+    /**
+     * Actualiza los datos de la interfaz con la sesión actual.
+     * Se debe llamar después de cada Login exitoso.
+     */
+    fun refreshSessionData() {
+        val app = getApplication<Application>()
+        username = SessionManager.getUsername(app) ?: ""
+        userRole = SessionManager.getRole(app)
     }
 }
 

@@ -15,7 +15,7 @@ import com.example.ajaclientemovil.network.SessionManager
 
 /**
  * Pantalla de visualización del perfil del usuario logueado.
- * * Extrae la información de sesión persistida en SharedPreferences.
+ * * Extrae la información de sesión guardada en SharedPreferences.
  */
 @Composable
 fun MyProfileScreen() {
@@ -61,12 +61,6 @@ fun MyProfileScreen() {
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Pie de página informativo
-        Text(
-            text = "Información obtenida de la sesión actual",
-            style = MaterialTheme.typography.labelSmall,
-            color = Color.Gray
-        )
     }
 }
 
