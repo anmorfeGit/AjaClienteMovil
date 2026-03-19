@@ -5,6 +5,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -23,59 +28,77 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
  */
 @Composable
 fun UserListScreen(viewModel: HomeViewModel = viewModel()) {
+    LaunchedEffect(Unit) { viewModel.fetchUsers() }
 
-    // Disparamos la carga de usuarios desde el servidor al componer la pantalla
-    LaunchedEffect(Unit) {
-        viewModel.fetchUsers()
-    }
+    Column(modifier = Modifier.fillMaxSize()) {
+        // --- BUSCADOR ---
+        OutlinedTextField(
+            value = viewModel.searchQuery,
+            onValueChange = { viewModel.searchQuery = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            placeholder = { Text("Buscar por nombre o email...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = {
+                if (viewModel.searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { viewModel.searchQuery = "" }) {
+                        Icon(Icons.Default.Clear, contentDescription = "Limpiar")
+                    }
+                }
+            },
+            shape = MaterialTheme.shapes.large,
+            singleLine = true
+        )
 
-    // Contenedor principal sin Scaffold (gestionado globalmente)
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (viewModel.isLoading) {
-            // Indicador de carga centrado mientras se recibe la respuesta JSON
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center),
-                color = MaterialTheme.colorScheme.primary
-            )
-        } else {
-            // Listado de usuarios con componentes de Material Design 3
-            LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(viewModel.userList) { user ->
-                    ListItem(
-                        headlineContent = {
-                            Text(user.username, style = MaterialTheme.typography.titleMedium)
-                        },
-                        supportingContent = {
-                            Text(user.email, style = MaterialTheme.typography.bodySmall)
-                        },
-                        trailingContent = {
-                            // Etiqueta de rol con distinción cromática
-                            Surface(
-                                shape = MaterialTheme.shapes.small,
-                                color = (if (user.role == "ADMIN") Color.Red else Color.Blue).copy(alpha = 0.1f)
-                            ) {
-                                Text(
-                                    text = user.role,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                    color = if (user.role == "ADMIN") Color.Red else Color.Blue,
-                                    style = MaterialTheme.typography.labelSmall
+        // --- LISTA FILTRADA ---
+        Box(modifier = Modifier.weight(1f)) { // El peso 1f hace que la lista ocupe el resto
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (viewModel.filteredUserList.isEmpty()) {
+                // Mensaje si no hay resultados
+                Text(
+                    text = "No se encontraron usuarios",
+                    modifier = Modifier.align(Alignment.Center),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    // IMPORTANTE: Usamos la lista filtrada del ViewModel
+                    items(viewModel.filteredUserList) { user ->
+                        ListItem(
+                            headlineContent = { Text(user.username) },
+                            supportingContent = { Text("${user.email} • ${user.role}") },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = if (user.isActive) Icons.Default.CheckCircle else Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = if (user.isActive) Color(0xFF4CAF50) else Color.Red
                                 )
+                            },
+                            trailingContent = {
+                                if (user.role != "ADMIN") {
+                                    Row {
+                                        IconButton(onClick = { viewModel.onToggleUserStatus(user) }) {
+                                            Icon(
+                                                imageVector = if (user.isActive) Icons.Default.Lock else Icons.Default.Refresh,
+                                                contentDescription = "Estado",
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                        IconButton(onClick = { viewModel.onDeleteUserByAdmin(user.id) }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = "Eliminar",
+                                                tint = Color.Red
+                                            )
+                                        }
+                                    }
+                                }
                             }
-                        },
-                        leadingContent = {
-                            // Indicador visual de estado de cuenta (Activo/Inactivo)
-                            Icon(
-                                imageVector = if (user.isActive) Icons.Default.CheckCircle else Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = if (user.isActive) Color(0xFF4CAF50) else Color.Gray
-                            )
-                        }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                    }
                 }
             }
         }

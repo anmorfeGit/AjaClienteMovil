@@ -21,7 +21,6 @@ import com.example.ajaclientemovil.R
  */
 @Composable
 fun HomeScreen() {
-    // Ya no recibimos parámetros de navegación aquí
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -29,19 +28,6 @@ fun HomeScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-       /* Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Logo de la Aplicación",
-            modifier = Modifier
-                .size(250.dp) // 1. Aumentamos el tamaño (prueba con 200.dp o 250.dp)
-                .padding(bottom = 32.dp) // 2. Más separación con el formulario
-                .graphicsLayer(
-                    shadowElevation = 8f, // 3. Opcional: le da un poco de relieve
-                    shape = CircleShape,
-                    clip = false
-                ),
-            contentScale = ContentScale.Fit // Asegura que no se deforme
-        )*/
         Text(
             text = "Bienvenido al Panel Principal",
             style = MaterialTheme.typography.headlineSmall,
@@ -55,3 +41,4 @@ fun HomeScreen() {
         )
     }
 }
+

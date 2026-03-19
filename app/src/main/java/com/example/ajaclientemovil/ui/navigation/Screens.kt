@@ -10,5 +10,12 @@ sealed class Screen(val route: String) {
     object Home : Screen("home_screen")
     object UserList : Screen("user_list")
     object MyProfile : Screen("my_profile")
-
+    object Register : Screen("register_screen")
+    object ForumTopics : Screen("forum_topics/{forumId}") {
+        fun createRoute(forumId: Long) = "forum_topics/$forumId"
+    }
+    object TopicDetail : Screen("topic_detail/{topicId}") {
+        fun createRoute(topicId: Long) = "topic_detail/$topicId"
+    }
 }
+

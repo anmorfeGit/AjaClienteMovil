@@ -16,7 +16,7 @@
       <SelectionState runConfigName="RepositoryIntegrationTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="test01_PerformLoginAndSaveSession()">
+      <SelectionState runConfigName="LoginFieldsTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

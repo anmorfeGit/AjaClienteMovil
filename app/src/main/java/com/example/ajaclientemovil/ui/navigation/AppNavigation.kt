@@ -14,68 +14,75 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
+import com.example.ajaclientemovil.data.ForumEntityDTO
 import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.ui.screens.*
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Componente central de navegación y estructura base de la aplicación.
- * El scaffold y el drawer estan presentes en todas las pantallas salvo en el login.
- * Para evitar tener que repetir el mismo codigo en cada pantalla que se vaya creando,
- * se ha diseñado la estructura base en el componente AppNavigation. *
- * * @param context Contexto de la aplicación necesario para interactuar con las SharedPreferences.
+ * Estructura base de navegación de la aplicación.
+ * Gestiona el Scaffold global, el Drawer lateral con foros dinámicos y el diálogo de cuenta.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavigation(context: Context) {
-    // --- 1. ESTADOS DE CONTROL DE NAVEGACIÓN ---
-    val navController = rememberNavController() // Controla el historial de pantallas
-    val scope = rememberCoroutineScope() // Necesario para lanzar animaciones (como abrir el menú)
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed) // Estado del menú lateral
-
-    // Obtenemos el ViewModel compartido para manejar el estado del Logout y datos de usuario
+    val navController = rememberNavController()
+    val scope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val homeViewModel: HomeViewModel = viewModel()
 
-    // Observamos la ruta actual del NavHost para saber en qué pantalla estamos en cada momento
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    LaunchedEffect(currentRoute) {
-        if (drawerState.isOpen) {
-            drawerState.close()
+    val isAuthRoute = currentRoute == Screen.Login.route || currentRoute == Screen.Register.route
+
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    // Dispara la carga de foros si el usuario ya está logueado al abrir la app
+    LaunchedEffect(Unit) {
+        if (SessionManager.isUserLoggedIn(context)) {
+            homeViewModel.fetchForums()
         }
     }
-    // --- 2. LÓGICA DE AUTO-LOGIN ---
-    // Si el SessionManager confirma que hay un token guardado, empezamos en Home; si no, en Login.
+
+    LaunchedEffect(currentRoute) {
+        if (drawerState.isOpen) { drawerState.close() }
+    }
+
     val startDestination = if (SessionManager.isUserLoggedIn(context)) {
         Screen.Home.route
     } else {
         Screen.Login.route
     }
 
-    // --- 3. ESTRUCTURA VISUAL (DRAWER + SCAFFOLD) ---
     ModalNavigationDrawer(
         drawerState = drawerState,
-        // Solo permitimos arrastrar el menú si el usuario no está en la pantalla de Login
-        gesturesEnabled = currentRoute != Screen.Login.route,
+        gesturesEnabled = !isAuthRoute,
         drawerContent = {
-            if (currentRoute != Screen.Login.route) {
-                // Definimos el contenido del menú lateral
-                AppDrawerSheet(onNavigate = { route ->
-                    navController.navigate(route)
-                    scope.launch { drawerState.close() } // Cerramos el menú tras navegar
-                })
+            if (!isAuthRoute) {
+                AppDrawerSheet(
+                    forums = homeViewModel.forumList,
+                    onForumClick = { forumId ->
+                        navController.navigate(Screen.ForumTopics.createRoute(forumId))
+                        scope.launch { drawerState.close() }
+                    },
+                    onNavigate = { route ->
+                        navController.navigate(route)
+                        scope.launch { drawerState.close() }
+                    }
+                )
             }
         }
     ) {
         Scaffold(
+            containerColor = if (isAuthRoute) Color.Transparent else MaterialTheme.colorScheme.background,
             topBar = {
-                // La barra superior es global: se muestra en todas las rutas excepto en Login
-                if (currentRoute != Screen.Login.route) {
+                if (!isAuthRoute) {
                     GlobalTopBar(
-                        // Cambiamos el texto del título dinámicamente según la ruta activa
                         title = when (currentRoute) {
                             Screen.Home.route -> "AJA CLIENTE"
                             Screen.UserList.route -> "GESTIÓN USUARIOS"
@@ -88,42 +95,98 @@ fun AppNavigation(context: Context) {
                         onProfileClick = { navController.navigate(Screen.MyProfile.route) },
                         onAdminClick = { navController.navigate(Screen.UserList.route) },
                         onLogoutClick = {
-                            // Ejecuta el cierre de sesión en el ViewModel y navega al Login al terminar
                             homeViewModel.onLogoutClicked {
                                 navController.navigate(Screen.Login.route) {
-                                    // Limpiamos el historial para que el usuario no pueda volver atrás al Home
                                     popUpTo(0) { inclusive = true }
                                 }
                             }
-                        }
+                        },
+                        onDeleteClick = { showDeleteConfirm = true }
                     )
                 }
             }
         ) { paddingValues ->
-            // --- 4. CONTENEDOR DE PANTALLAS (NAVHOST) ---
-            Box(modifier = Modifier.padding(paddingValues)) {
+
+            if (showDeleteConfirm) {
+                AlertDialog(
+                    onDismissRequest = { showDeleteConfirm = false },
+                    title = { Text("¿Eliminar tu cuenta?", fontWeight = FontWeight.Bold) },
+                    text = { Text("Esta acción es permanente. Se borrarán todos tus datos y se cerrará la sesión.") },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showDeleteConfirm = false
+                                homeViewModel.onDeleteAccountClicked {
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) { Text("ELIMINAR") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteConfirm = false }) { Text("CANCELAR") }
+                    }
+                )
+            }
+
+            Box(modifier = if (isAuthRoute) Modifier.fillMaxSize() else Modifier.padding(paddingValues)) {
                 NavHost(
                     navController = navController,
                     startDestination = startDestination
                 ) {
                     composable(Screen.Login.route) {
-                        LoginScreen(onLoginSuccess = {
-                            homeViewModel.refreshSessionData()
-                            navController.navigate(Screen.Home.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
-                            }
-                        })
+                        LoginScreen(
+                            onLoginSuccess = {
+                                homeViewModel.refreshSessionData()
+                                homeViewModel.fetchForums() // Cargar foros tras login exitoso
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Login.route) { inclusive = true }
+                                }
+                            },
+                            onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                        )
                     }
-                    // Pantallas simplificadas: no necesitan lógica de navegación interna
+                    composable(Screen.Register.route) {
+                        RegisterScreen(onBackToLogin = { navController.popBackStack() })
+                    }
                     composable(Screen.Home.route) { HomeScreen() }
                     composable(Screen.UserList.route) { UserListScreen() }
-                    composable(Screen.MyProfile.route) { MyProfileScreen() }
+                    composable(Screen.MyProfile.route) {
+                        MyProfileScreen(
+                            onLogout = {
+                                navController.navigate(Screen.Login.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            }
+                        )
+                    }
+                    composable(
+                        route = Screen.ForumTopics.route,
+                        arguments = listOf(navArgument("forumId") { type = NavType.LongType })
+                    ) { backStackEntry ->
+                        val forumId = backStackEntry.arguments?.getLong("forumId") ?: -1L
+
+                        ForumTopicsScreen(
+                            forumId = forumId,
+                            viewModel = homeViewModel,
+                            onTopicClick = { topicId ->
+                                navController.navigate(Screen.TopicDetail.createRoute(topicId))
+                            }
+                        )
+                    }
+                    composable(
+                        route = Screen.TopicDetail.route,
+                        arguments = listOf(navArgument("topicId") { type = NavType.LongType })
+                    ) { backStackEntry ->
+                        val topicId = backStackEntry.arguments?.getLong("topicId") ?: -1L
+                        TopicDetailScreen(topicId = topicId, viewModel = homeViewModel)
+                    }
                 }
 
-                // --- 5. COMPONENTES GLOBALES DE ESTADO ---
-                // Si el ViewModel está procesando algo (como el Logout), mostramos el bloqueo de carga
                 if (homeViewModel.isLoading) {
-                    LoadingOverlay("Cerrando sesión...")
+                    LoadingOverlay("Procesando...")
                 }
             }
         }
@@ -131,10 +194,67 @@ fun AppNavigation(context: Context) {
 }
 
 /**
- * Barra superior unificada de la aplicación.
- * * Contiene el icono de menú (hamburguesa), el título dinámico y un menú desplegable
- * para las opciones de perfil y administración.
+ * Barra lateral que muestra dinámicamente la lista de foros disponibles.
  */
+@Composable
+fun AppDrawerSheet(
+    forums: List<ForumEntityDTO>,
+    onForumClick: (Long) -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    ModalDrawerSheet {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(24.dp)
+        ) {
+            Text("FOROS AJA", color = Color.White, style = MaterialTheme.typography.titleLarge)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "TEMÁTICAS",
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        if (forums.isEmpty()) {
+            Text(
+                "Cargando foros...",
+                modifier = Modifier.padding(16.dp),
+                style = MaterialTheme.typography.bodySmall
+            )
+        } else {
+            forums.forEach { forum ->
+                NavigationDrawerItem(
+                    label = { Text(forum.title) },
+                    selected = false,
+                    icon = { Icon(Icons.Default.List, contentDescription = null) },
+                    onClick = { onForumClick(forum.id) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        }
+
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+        NavigationDrawerItem(
+            label = { Text("Inicio") },
+            selected = false,
+            icon = { Icon(Icons.Default.Home, null) },
+            onClick = { onNavigate(Screen.Home.route) },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+    }
+}
+
+/**
+ * Barra superior global con botones de navegación.
+ *
+ **/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GlobalTopBar(
@@ -144,23 +264,23 @@ fun GlobalTopBar(
     onMenuClick: () -> Unit,
     onProfileClick: () -> Unit,
     onAdminClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onDeleteClick: () -> Unit
 ) {
-    var showMenu by remember { mutableStateOf(false) } // Controla la apertura del Dropdown
+    var showMenu by remember { mutableStateOf(false) }
 
     CenterAlignedTopAppBar(
         title = { Text(title, fontWeight = FontWeight.ExtraBold) },
         navigationIcon = {
             IconButton(onClick = onMenuClick) {
-                Icon(Icons.Default.Menu, contentDescription = "Abrir menú lateral")
+                Icon(Icons.Default.Menu, contentDescription = "Menú")
             }
         },
         actions = {
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.AccountCircle, contentDescription = "Opciones de cuenta")
+                    Icon(Icons.Default.AccountCircle, contentDescription = "Perfil")
                 }
-                // Menú desplegable que aparece bajo el icono de perfil
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     Text("Hola, $username", modifier = Modifier.padding(16.dp), fontWeight = FontWeight.Bold)
                     HorizontalDivider()
@@ -169,7 +289,6 @@ fun GlobalTopBar(
                         leadingIcon = { Icon(Icons.Default.Person, null) },
                         onClick = { showMenu = false; onProfileClick() }
                     )
-                    // Opción protegida: solo visible si el usuario tiene rol ADMIN
                     if (isAdmin) {
                         DropdownMenuItem(
                             text = { Text("Gestión Usuarios") },
@@ -179,8 +298,14 @@ fun GlobalTopBar(
                     }
                     DropdownMenuItem(
                         text = { Text("Cerrar Sesión") },
-                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, null, tint = Color.Red) },
+                        leadingIcon = { Icon(Icons.AutoMirrored.Filled.ExitToApp, null) },
                         onClick = { showMenu = false; onLogoutClick() }
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Eliminar Cuenta", color = Color.Red) },
+                        leadingIcon = { Icon(Icons.Default.Delete, null, tint = Color.Red) },
+                        onClick = { showMenu = false; onDeleteClick() }
                     )
                 }
             }
@@ -194,56 +319,18 @@ fun GlobalTopBar(
     )
 }
 
-/**
- * Interfaz de bloqueo que se muestra durante procesos de carga asíncronos.
- * Bloquea la interacción del usuario para evitar duplicidad de acciones.
- */
 @Composable
 fun LoadingOverlay(message: String) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f)), // Oscurece el fondo
+        modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.4f)),
         contentAlignment = Alignment.Center
     ) {
         Card {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(message)
             }
         }
-    }
-}
-
-/**
- * Define el contenido y diseño del Navigation Drawer (menú lateral).
- */
-@Composable
-fun AppDrawerSheet(onNavigate: (String) -> Unit) {
-    ModalDrawerSheet {
-        // Cabecera del Drawer
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.primary)
-                .padding(20.dp)
-        ) {
-            Text("FOROS AJA", color = Color.White, style = MaterialTheme.typography.titleLarge)
-        }
-        // Ítems del menú (puedes añadir rutas reales aquí)
-        NavigationDrawerItem(
-            label = { Text("General") },
-            selected = false,
-            onClick = { /* Implementar navegación a foro */ }
-        )
-        NavigationDrawerItem(
-            label = { Text("Dudas") },
-            selected = false,
-            onClick = { /* Implementar navegación a foro */ }
-        )
     }
 }

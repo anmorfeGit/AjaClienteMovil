@@ -3,6 +3,7 @@ package com.example.ajaclientemovil.repository
 import android.content.Context
 import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.UserEntityDTO
+import com.example.ajaclientemovil.data.UserRegisterDTO
 import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
 
@@ -104,4 +105,105 @@ class UserRepository(private val context: Context) {
             Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
         }
     }
+
+    /**
+     * Envía los datos de un nuevo usuario al servidor.
+     */
+    suspend fun performRegister(username: String, email: String, pass: String): Result<String> {
+        return try {
+            val registerData = UserRegisterDTO(username, email, pass)
+            val response = apiService.register(registerData)
+
+            if (response.isSuccessful) {
+                Result.success("Usuari registrat correctament")
+            } else {
+                // Extraemos el mensaje de error del servidor si existe
+                val errorMsg = response.errorBody()?.string() ?: "Error en el registre"
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Modifica los datos del usuario actual y actualiza la caché local.
+     */
+    suspend fun updateProfile(newUsername: String, newEmail: String, currentPassword: String): Result<UserEntityDTO> {
+        return try {
+            val token = SessionManager.getToken(context) ?: throw Exception("Sesión no válida")
+            val currentUser = SessionManager.getUser(context) ?: throw Exception("Usuario no encontrado")
+
+            // Construimos el objeto exacto que Alex espera
+            val userToSend = currentUser.copy(
+                username = newUsername,    // Ahora sí permitimos cambiar el nombre
+                email = newEmail,          // Y el email
+                password = currentPassword, // Enviamos la actual para verificar
+                registerDate = currentUser.registerDate // Mantenemos la original
+            )
+
+            // Llamada al endpoint /api/user
+            val response = apiService.updateUser("JWT_TOKEN=$token", userToSend)
+
+            if (response.isSuccessful) {
+                // Si el servidor responde OK, actualizamos nuestra copia local
+                // (Sin guardar la contraseña en el SharedPreferences por seguridad)
+                val updatedUser = userToSend.copy(password = null)
+                SessionManager.saveSession(context, token, updatedUser)
+                Result.success(updatedUser)
+            } else {
+                val errorBody = response.errorBody()?.string() ?: "Error de validación"
+                Result.failure(Exception(errorBody))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    /** Elimina un usuario del sistema.
+     * Si el ID coincide con el usuario actual, se limpia la sesión local.
+     */
+    suspend fun deleteUser(userId: Long): Result<Unit> {
+        return try {
+            val token = SessionManager.getToken(context) ?: throw Exception("Sesión no válida")
+
+            // Pasamos los DOS parámetros: el token para autorizar y el ID para identificar
+            val response = apiService.deleteUser("JWT_TOKEN=$token", userId)
+
+            if (response.isSuccessful) {
+                // Verificamos si el usuario borrado es el actual para cerrar sesión
+                val currentUser = SessionManager.getUser(context)
+                if (currentUser?.id == userId) {
+                    SessionManager.clearSession(context)
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al eliminar: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
+        }
+    }
+
+    /**
+     * Cambia el estado de un usuario (activo/inactivo).
+     * @param userId Identificador único del usuario.
+     * @param enable Indica si se debe habilitar o deshabilitar el usuario.
+     * @return [Result] con el estado de la operación.
+     */
+    suspend fun toggleUserStatus(userId: Long, enable: Boolean): Result<Unit> {
+        return try {
+            val token = SessionManager.getToken(context) ?: throw Exception("Sesión no válida")
+            val response = if (enable) {
+                apiService.enableUser("JWT_TOKEN=$token", userId)
+            } else {
+                apiService.disableUser("JWT_TOKEN=$token", userId)
+            }
+
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al cambiar estado: ${response.code()}"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+

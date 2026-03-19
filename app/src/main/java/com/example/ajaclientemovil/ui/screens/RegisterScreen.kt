@@ -5,9 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,34 +19,37 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ajaclientemovil.ui.viewmodel.LoginViewModel
+import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModel
 
-/**
- * Interfaz de usuario para el inicio de sesión.
- * Se comunica con [LoginViewModel] para gestionar los eventos y estados.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    viewModel: LoginViewModel = viewModel(),
-    onLoginSuccess: () -> Unit,
-    onNavigateToRegister: () -> Unit
+fun RegisterScreen(
+    viewModel: RegisterViewModel = viewModel(),
+    onBackToLogin: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
     val scrollState = rememberScrollState()
+
     val gradientBackground = Brush.verticalGradient(
         colors = listOf(
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
             MaterialTheme.colorScheme.background
         )
     )
+
     Box(modifier = Modifier.fillMaxSize().background(gradientBackground)) {
         Scaffold(
-            containerColor = Color.Transparent,
+            containerColor = Color.Transparent, // Clave para ver el gradiente
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("AJA CLIENTE", fontWeight = FontWeight.Bold) }
+                    title = { Text("CREAR CUENTA", fontWeight = FontWeight.Bold) },
+                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                        containerColor = Color.Transparent
+                    )
                 )
             }
         ) { padding ->
@@ -60,62 +62,55 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Un icono grande para reforzar la identidad visual
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(100.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
-                    text = "Bienvenido",
+                    text = "Únete a nosotros",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
 
                 Text(
-                    text = "Introduce tus credenciales para continuar",
+                    text = "Crea una cuenta para empezar a participar",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                // Campo de Usuario con Icono
+                // Campo Usuario
                 OutlinedTextField(
                     value = username,
-                    onValueChange = {
-                        username = it
-                        viewModel.resetError()
-                    },
+                    onValueChange = { username = it },
                     label = { Text("Usuario") },
-                    leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
+                    leadingIcon = { Icon(Icons.Default.Person, null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = MaterialTheme.shapes.large, // Bordes redondeados modernos
+                    shape = MaterialTheme.shapes.large,
                     enabled = !viewModel.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Campo de Contraseña con Icono
+                // Campo Email
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    leadingIcon = { Icon(Icons.Default.Email, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
+                    enabled = !viewModel.isLoading
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Campo Contraseña
                 OutlinedTextField(
                     value = password,
-                    onValueChange = {
-                        password = it
-                        viewModel.resetError()
-                    },
+                    onValueChange = { password = it },
                     label = { Text("Contraseña") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = null
-                        )
-                    },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -123,9 +118,24 @@ fun LoginScreen(
                     enabled = !viewModel.isLoading
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                // Gestión de estados
+                // Confirmar Contraseña
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Confirmar Contraseña") },
+                    leadingIcon = { Icon(Icons.Default.Lock, null) },
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
+                    enabled = !viewModel.isLoading
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Errores
                 if (viewModel.errorMessage != null) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
@@ -144,19 +154,25 @@ fun LoginScreen(
                     CircularProgressIndicator()
                 } else {
                     Button(
-                        onClick = { viewModel.onLoginClicked(username, password, onLoginSuccess) },
+                        onClick = {
+                            viewModel.onRegisterClicked(username, email, password, confirmPassword, onBackToLogin)
+                        },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = MaterialTheme.shapes.large, // Mismo redondeado que los inputs
+                        shape = MaterialTheme.shapes.large,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                     ) {
-                        Text("ENTRAR", fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                        Text("REGISTRARME", fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
                     }
                 }
-                TextButton(onClick = onNavigateToRegister) {
-                    Text("¿No tienes cuenta? Regístrate aquí")
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(onClick = onBackToLogin) {
+                    Text("¿Ya tienes cuenta? Inicia sesión")
                 }
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
 }
-

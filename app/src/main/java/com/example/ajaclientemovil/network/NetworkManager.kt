@@ -1,5 +1,6 @@
 package com.example.ajaclientemovil.network
 
+import android.os.Build
 import com.example.ajaclientemovil.data.UserEntityDTO
 import com.example.ajaclientemovil.data.network.AjaApiService
 import okhttp3.OkHttpClient
@@ -12,7 +13,12 @@ import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
 import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonPrimitive
+import com.google.gson.JsonSerializer
 import org.json.JSONObject
+import java.time.LocalDate
 
 /**
  * Cliente de red centralizado para la aplicación AJA.
@@ -60,11 +66,12 @@ object NetworkManager {
      * Se utiliza el cliente "Unsafe" para garantizar la conexión con el servidor de desarrollo.
      */
     private val client = getUnsafeOkHttpClient()
-    private val gson = Gson()
+    private val gson = GsonBuilder().create()
+
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(client)
-        .addConverterFactory(GsonConverterFactory.create()) // Conversión automática JSON -> Data Class
+        .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 
     // Servicio que expone los métodos definidos en la interfaz AjaApiService
@@ -90,12 +97,10 @@ object NetworkManager {
 
             if (response.isSuccessful && body != null) {
                 if (body.success) {
-                    // LOGIN EXITOSO
                     val cookieHeader = response.headers()["Set-Cookie"]
                     val token = cookieHeader?.split(";")?.firstOrNull { it.contains("JWT_TOKEN") }
-                        ?.split("=")?.get(1)
+                        ?.split("=")?.getOrNull(1)
 
-                    // Conversión manual de Any a UserEntityDTO usando el estándar del servidor
                     val jsonUser = gson.toJson(body.message)
                     val userDto = gson.fromJson(jsonUser, UserEntityDTO::class.java)
 
@@ -124,6 +129,7 @@ object NetworkManager {
      * * @return Boolean: 'true' si el servidor confirmó el cierre de sesión,
      * 'false' en caso de error de red o credenciales inválidas.
      */
+
     suspend fun logout(): Boolean {
         return try {
             // Ejecución de la llamada POST /api/auth/logout definida en AjaApiService
@@ -144,3 +150,4 @@ object NetworkManager {
 
 
 }
+

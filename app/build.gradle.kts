@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.ajaclientemovil"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -57,7 +57,11 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     implementation("com.squareup.okhttp3:logging-interceptor:5.3.2")
     implementation("androidx.navigation:navigation-compose:2.9.7")
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.junit.ktx)
+    implementation(libs.androidx.compose.runtime)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.ui.text)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

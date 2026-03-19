@@ -15,10 +15,11 @@ object SessionManager {
 
     // Llaves para identificar los datos
     private const val KEY_JWT_TOKEN = "jwt_token"
+    private const val KEY_USER_ID = "user_id"
     private const val KEY_USER_ROLE = "user_role"
     private const val KEY_USERNAME = "username"
     private const val KEY_EMAIL = "email"
-
+    private const val KEY_REGISTER_DATE = "register_date"
 
 
     /**
@@ -31,9 +32,11 @@ object SessionManager {
     fun saveSession(context: Context, token: String, user: UserEntityDTO) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
         prefs.putString(KEY_JWT_TOKEN, token)
+        prefs.putLong(KEY_USER_ID, user.id ?: -1L)
         prefs.putString(KEY_USERNAME, user.username)
         prefs.putString(KEY_USER_ROLE, user.role)
         prefs.putString(KEY_EMAIL, user.email)
+        prefs.putString(KEY_REGISTER_DATE, user.registerDate)
         prefs.apply()
     }
 
@@ -89,6 +92,26 @@ object SessionManager {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPref.getString(KEY_EMAIL, null) ?: ""
     }
+    /**
+     * Reconstruye el objeto UserEntityDTO desde las preferencias.
+     */
+    fun getUser(context: Context): UserEntityDTO? {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val id = prefs.getLong(KEY_USER_ID, -1L)
+        val username = prefs.getString(KEY_USERNAME, null) ?: return null
 
+        return UserEntityDTO(
+            id = id,
+            username = username,
+            email = prefs.getString(KEY_EMAIL, "") ?: "",
+            role = prefs.getString(KEY_USER_ROLE, "USER") ?: "USER",
+            isActive = true,
+            registerDate = prefs.getString(KEY_REGISTER_DATE, null) // <--- Recuperamos
+        )
+    }    fun getRegisterDate(context: Context): String {
+        val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return sharedPref.getString(KEY_REGISTER_DATE, null) ?: "No disponible"
+    }
 
 }
+

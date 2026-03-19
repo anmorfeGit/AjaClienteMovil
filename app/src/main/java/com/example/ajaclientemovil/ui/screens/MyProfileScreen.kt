@@ -1,84 +1,156 @@
 package com.example.ajaclientemovil.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.example.ajaclientemovil.network.SessionManager
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 
 /**
- * Pantalla de visualización del perfil del usuario logueado.
- * * Extrae la información de sesión guardada en SharedPreferences.
+ * Pantalla de visualización y edición del perfil del usuario logueado.
+ * * Permite modificar el email y la contraseña, y muestra datos informativos
+ * como el rol y la fecha de registro.
  */
 @Composable
-fun MyProfileScreen() {
-    val context = LocalContext.current
+fun MyProfileScreen(
+    viewModel: HomeViewModel = viewModel(),
+    onLogout: () -> Unit
+) {
+    val scrollState = rememberScrollState()
 
-    // Recuperamos los datos locales guardados tras el login exitoso
-    val username = SessionManager.getUsername(context)
-    val role = SessionManager.getRole(context) ?: "Usuario"
-    val email = SessionManager.getEmail(context) ?: "No disponible"
-
-        Column(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Cabecera visual de perfil
         Icon(
             imageVector = Icons.Default.AccountCircle,
             contentDescription = null,
-            modifier = Modifier.size(120.dp),
+            modifier = Modifier.size(100.dp),
             tint = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Tarjeta contenedora de datos personales (Estética Material3)
-        Card(
+        Text(
+            text = viewModel.username ?: "Perfil",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.ExtraBold
+        )
+
+        Text(
+            text = "Rol: ${viewModel.userRole}",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.secondary
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // --- CAMPOS DE EDICIÓN ---
+
+        OutlinedTextField(
+            value = viewModel.username ?: "",
+            onValueChange = { viewModel.username = it },
+            label = { Text("Nombre de usuario") },
+            placeholder = { Text("Cerrará sesión si lo cambias") },
             modifier = Modifier.fillMaxWidth(),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            leadingIcon = { Icon(Icons.Default.AccountCircle, null) },
+            shape = MaterialTheme.shapes.large,
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = viewModel.email ?: "",
+            onValueChange = { viewModel.email = it },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(Icons.Default.Email, null) },
+            shape = MaterialTheme.shapes.large,
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = viewModel.password,
+            onValueChange = { viewModel.password = it },
+            label = { Text("Contraseña actual") },
+            placeholder = { Text("Obligatoria para confirmar") },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(Icons.Default.Lock, null) },
+            visualTransformation = PasswordVisualTransformation(),
+            shape = MaterialTheme.shapes.large,
+            singleLine = true,
+            isError = viewModel.password.isEmpty()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- CAMPO DE FECHA (SOLO LECTURA) ---
+        OutlinedTextField(
+            value = viewModel.registerDate ?: "No disponible",
+            onValueChange = {}, // No hace nada al cambiar
+            label = { Text("Fecha de Registro") },
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = { Icon(Icons.Default.DateRange, null) },
+            readOnly = true, // Evita que se pueda escribir
+            enabled = false, // Lo pone en un tono grisáceo para indicar que es informativo
+            shape = MaterialTheme.shapes.large,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // --- BOTÓN DE GUARDAR ---
+        Button(
+            onClick = {
+                viewModel.onUpdateProfileClicked(
+                    onSuccess = {
+                        // Aquí podrías mostrar un mensaje de éxito
+                    },
+                    onUsernameChanged = {
+                        onLogout()
+                    }
+                )
+            },
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = MaterialTheme.shapes.large,
+            enabled = !viewModel.isLoading
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                ProfileItem(label = "Nombre de Usuario", value = username)
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                ProfileItem(label = "Rol del Sistema", value = role)
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                ProfileItem(label = "Dirección de Email", value = email)
+            if (viewModel.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+            } else {
+                Text("ACTUALIZAR PERFIL", fontWeight = FontWeight.Bold)
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
-    }
-}
-
-/**
- * Componente reutilizable para mostrar un par etiqueta-valor en el perfil.
- */
-@Composable
-fun ProfileItem(label: String, value: String) {
-    Column {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
-        )
+        // Errores
+        viewModel.errorMessage?.let { error ->
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(text = error, color = MaterialTheme.colorScheme.error)
+        }
     }
 }
