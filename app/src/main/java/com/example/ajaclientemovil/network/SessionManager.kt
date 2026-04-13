@@ -65,6 +65,7 @@ object SessionManager {
      * Elimina los datos de sesión (Logout).
      * * Al borrar el "JWT_TOKEN", las futuras peticiones al servidor de Alex
      * devolverán un error 403 (Prohibido), forzando el re-login.
+     * @param context Contexto de la aplicación.
      */
     fun clearSession(context: Context) {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -82,6 +83,8 @@ object SessionManager {
     /**
      * Recupera el nombre de usuario guardado.
      * Devuelve un String vacío si no existe para evitar errores en la UI.
+     * @param context Contexto de la aplicación.
+     * @return El nombre de usuario o un String vacío si no existe.
      */
     fun getUsername(context: Context): String {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -93,7 +96,9 @@ object SessionManager {
         return sharedPref.getString(KEY_EMAIL, null) ?: ""
     }
     /**
-     * Reconstruye el objeto UserEntityDTO desde las preferencias.
+     * Reconstruye el objeto UserEntityDTO desde las preferencias
+     * @param context Contexto de la aplicación.
+     * @return El objeto UserEntityDTO o null si no existe.
      */
     fun getUser(context: Context): UserEntityDTO? {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -108,7 +113,14 @@ object SessionManager {
             isActive = true,
             registerDate = prefs.getString(KEY_REGISTER_DATE, null) // <--- Recuperamos
         )
-    }    fun getRegisterDate(context: Context): String {
+    }
+
+    /**
+     * Recupera la fecha de registro del usuario.
+     * @param context Contexto de la aplicación.
+     * @return La fecha de registro
+     */
+    fun getRegisterDate(context: Context): String {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPref.getString(KEY_REGISTER_DATE, null) ?: "No disponible"
     }

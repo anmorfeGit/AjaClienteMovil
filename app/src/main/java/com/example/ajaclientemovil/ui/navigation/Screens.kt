@@ -6,15 +6,52 @@ package com.example.ajaclientemovil.ui.navigation
  * facilitando el mantenimiento y evitando errores de hardcoding.
  */
 sealed class Screen(val route: String) {
+    /**
+     * Objeto que representa la pantalla de inicio de sesión.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object Login : Screen("login_screen")
+
+    /**
+     * Objeto que representa la pantalla de inicio.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object Home : Screen("home_screen")
+
+    /**
+     * Objeto que representa la pantalla de gestión de usuarios.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object UserList : Screen("user_list")
+
+    /**
+     * Objeto que representa la pantalla de perfil del usuario.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object MyProfile : Screen("my_profile")
+
+    /**
+     * Objeto que representa la pantalla de registro de usuarios.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object Register : Screen("register_screen")
+    /**
+     * Objeto que representa la pantalla de detalles de un tema.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object ForumTopics : Screen("forum_topics/{forumId}") {
         fun createRoute(forumId: Long) = "forum_topics/$forumId"
     }
+
+    /**
+     * Objeto que representa la pantalla de detalles de un tema.
+     * @property route Ruta asociada a esta pantalla.
+     */
     object TopicDetail : Screen("topic_detail/{topicId}") {
+        /**
+         * Crea la ruta para el detalle de un tema.
+         * @param topicId Identificador único del tema.
+         */
         fun createRoute(topicId: Long) = "topic_detail/$topicId"
     }
 }

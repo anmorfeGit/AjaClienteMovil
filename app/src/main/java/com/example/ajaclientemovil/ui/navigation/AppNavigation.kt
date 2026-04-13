@@ -26,6 +26,7 @@ import kotlinx.coroutines.launch
 /**
  * Estructura base de navegación de la aplicación.
  * Gestiona el Scaffold global, el Drawer lateral con foros dinámicos y el diálogo de cuenta.
+ * @param context Contexto de la aplicación.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -195,6 +196,9 @@ fun AppNavigation(context: Context) {
 
 /**
  * Barra lateral que muestra dinámicamente la lista de foros disponibles.
+ * @param forums Lista de foros a mostrar.
+ * @param onForumClick Callback al hacer clic en un foro.
+ * @param onNavigate Callback al navegar a otra pantalla.
  */
 @Composable
 fun AppDrawerSheet(
@@ -253,7 +257,14 @@ fun AppDrawerSheet(
 
 /**
  * Barra superior global con botones de navegación.
- *
+ * @param title Título de la pantalla.
+ * @param username Nombre de usuario.
+ * @param isAdmin Indica si el usuario es administrador.
+ * @param onMenuClick Callback al hacer clic en el botón de menú.
+ * @param onProfileClick Callback al hacer clic en el botón de perfil
+ * @param onAdminClick Callback al hacer clic en el botón de gestión de usuarios.
+ * @param onLogoutClick Callback al hacer clic en el botón de cierre de sesión.
+ * @param onDeleteClick Callback al hacer clic en el botón de eliminación de cuenta.
  **/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -319,6 +330,10 @@ fun GlobalTopBar(
     )
 }
 
+/**
+ * Muestra un overlay de carga con un mensaje.
+ * @param message Mensaje a mostrar.
+ */
 @Composable
 fun LoadingOverlay(message: String) {
     Box(

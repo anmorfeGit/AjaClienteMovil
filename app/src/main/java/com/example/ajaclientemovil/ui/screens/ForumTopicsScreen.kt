@@ -40,7 +40,11 @@ fun ForumTopicsScreen(
     var topicToEdit by remember { mutableStateOf<TopicEntityDTO?>(null) }
     var editTitle by remember { mutableStateOf("") }
 
-    // Función para refrescar los datos
+    /**
+     * Actualiza la lista de temas y el título del foro.
+     * @param fetchedTopics Lista de temas actualizados.
+     * @param title Título del foro.
+     */
     fun refreshData() {
         viewModel.fetchTopicsByForum(forumId) { fetchedTopics ->
             topics.clear()

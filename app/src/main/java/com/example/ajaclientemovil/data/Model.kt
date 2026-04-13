@@ -30,7 +30,7 @@ data class LoginDTO(
     val success: Boolean,
     val message: Any?
 )
-
+// --- USUARIOS ---
 /**
  * DTO con la estructura del usuario para mapeo manual.
  * @param id Identificador único del usuario.
@@ -69,6 +69,7 @@ data class UserListDTO(
     val message: List<UserEntityDTO>
 )
 
+// --- FOROS ---
 /**
  * DTO para el registro de un nuevo foro.
  * @param id Identificador único del foro.
@@ -93,6 +94,7 @@ data class ForumListDTO(
     val message: List<ForumEntityDTO>
 )
 
+// --- TEMAS ---
 /**
  * DTO para el registro de un nuevo tema.
  * @param id Identificador único del tema.

@@ -108,6 +108,10 @@ class UserRepository(private val context: Context) {
 
     /**
      * Envía los datos de un nuevo usuario al servidor.
+     * @param username Nombre de usuario.
+     * @param email Email del usuario.
+     * @param pass Contraseña del usuario.
+     * @return [Result] con el mensaje de éxito o error.
      */
     suspend fun performRegister(username: String, email: String, pass: String): Result<String> {
         return try {
@@ -128,6 +132,10 @@ class UserRepository(private val context: Context) {
 
     /**
      * Modifica los datos del usuario actual y actualiza la caché local.
+     * @param newUsername Nuevo nombre de usuario.
+     * @param newEmail Nuevo email.
+     * @param currentPassword Contraseña actual.
+     * @return [Result] con el usuario actualizado o error.
      */
     suspend fun updateProfile(newUsername: String, newEmail: String, currentPassword: String): Result<UserEntityDTO> {
         return try {
@@ -161,6 +169,8 @@ class UserRepository(private val context: Context) {
     }
     /** Elimina un usuario del sistema.
      * Si el ID coincide con el usuario actual, se limpia la sesión local.
+     * @param userId Identificador único del usuario.
+     * @return [Result] con el estado de la operación.
      */
     suspend fun deleteUser(userId: Long): Result<Unit> {
         return try {

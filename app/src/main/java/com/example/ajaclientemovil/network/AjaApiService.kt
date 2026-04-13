@@ -1,5 +1,6 @@
 package com.example.ajaclientemovil.data.network
 
+import com.example.ajaclientemovil.data.ForumEntityDTO
 import com.example.ajaclientemovil.data.ForumListDTO
 import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.PostEditDTO
@@ -136,6 +137,7 @@ interface AjaApiService {
         @Path("id") id: Long
     ): Response<Map<String, Any>>
 
+// --- FOROS ---
     /**
      * Obtiene la lista completa de foros disponibles.
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
@@ -147,7 +149,6 @@ interface AjaApiService {
         @Header("Cookie") token: String
     ): Response<ForumListDTO>
 
-// --- FOROS ---
     /**
      * Obtiene un foro por su ID.
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
@@ -157,6 +158,42 @@ interface AjaApiService {
      */
     @GET("/api/forum/{id}")
     suspend fun getForumById(
+        @Header("Cookie") token: String,
+        @Path("id") id: Long
+    ): Response<Map<String, Any>>
+
+    /**
+     * Crea un nuevo foro.
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
+     * valide que el usuario tiene permisos para crear el foro.
+     * @param forum Objeto [ForumEntityDTO] con los datos del nuevo foro.
+     */
+    @POST("/api/forum")
+    suspend fun createForum(
+        @Header("Cookie") token: String,
+        @Body forum: ForumEntityDTO
+    ): Response<Map<String, Any>>
+
+    /**
+     * Edita un foro existente.
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
+     * valide que el usuario tiene permisos para editar el foro.
+     * @param forum Objeto [ForumEntityDTO] con los datos actualizados del foro.
+     */
+    @PUT("/api/forum")
+    suspend fun editForum(
+        @Header("Cookie") token: String,
+        @Body forum: ForumEntityDTO
+    ): Response<Map<String, Any>>
+
+    /**
+     * Elimina un foro existente.
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
+     * valide que el usuario tiene permisos para eliminar el foro.
+     * @param id Identificador único del foro que se desea eliminar.
+     */
+    @DELETE("/api/forum/{id}")
+    suspend fun deleteForum(
         @Header("Cookie") token: String,
         @Path("id") id: Long
     ): Response<Map<String, Any>>
