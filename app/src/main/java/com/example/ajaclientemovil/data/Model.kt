@@ -78,7 +78,7 @@ data class UserListDTO(
  * @param lastModification Fecha de última modificación del foro.
  */
 data class ForumEntityDTO(
-    val id: Long,
+    val id: Long? = null,
     val title: String,
     val creationDate: String? = null,
     val lastModification: String? = null
@@ -195,4 +195,14 @@ data class PostEntityDTO(
 data class PostListResponse(
     val success: Boolean,
     val message: List<PostEntityDTO>
+)
+
+/**
+ * DTO para la respuesta de un mensaje genérico.
+ * @param message Mensaje de respuesta.
+ * @param success Indica si la operación fue exitosa.
+ */
+data class GenericResponse(
+    val message: String,
+    val success: Boolean
 )

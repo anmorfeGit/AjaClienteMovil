@@ -2,6 +2,7 @@ package com.example.ajaclientemovil.data.network
 
 import com.example.ajaclientemovil.data.ForumEntityDTO
 import com.example.ajaclientemovil.data.ForumListDTO
+import com.example.ajaclientemovil.data.GenericResponse
 import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.PostEditDTO
 import com.example.ajaclientemovil.data.PostListResponse
@@ -167,30 +168,33 @@ interface AjaApiService {
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
      * valide que el usuario tiene permisos para crear el foro.
      * @param forum Objeto [ForumEntityDTO] con los datos del nuevo foro.
+     * @return Una [Response] con el estado de la operación.
      */
     @POST("/api/forum")
     suspend fun createForum(
         @Header("Cookie") token: String,
         @Body forum: ForumEntityDTO
-    ): Response<Map<String, Any>>
+    ): Response<GenericResponse>
 
     /**
      * Edita un foro existente.
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
      * valide que el usuario tiene permisos para editar el foro.
      * @param forum Objeto [ForumEntityDTO] con los datos actualizados del foro.
+     * @return Una [Response] con el estado de la operación.
      */
     @PUT("/api/forum")
     suspend fun editForum(
         @Header("Cookie") token: String,
         @Body forum: ForumEntityDTO
-    ): Response<Map<String, Any>>
+    ): Response<GenericResponse>
 
     /**
      * Elimina un foro existente.
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor". Es vital para que el servidor
      * valide que el usuario tiene permisos para eliminar el foro.
      * @param id Identificador único del foro que se desea eliminar.
+     * @return Una [Response] con el estado de la operación.
      */
     @DELETE("/api/forum/{id}")
     suspend fun deleteForum(

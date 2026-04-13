@@ -42,6 +42,9 @@ fun AppNavigation(context: Context) {
     val isAuthRoute = currentRoute == Screen.Login.route || currentRoute == Screen.Register.route
 
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showForumDialog by remember { mutableStateOf(false) }
+    var forumToEdit by remember { mutableStateOf<ForumEntityDTO?>(null) }
+    var forumTitleText by remember { mutableStateOf("") }
 
     // Dispara la carga de foros si el usuario ya está logueado al abrir la app
     LaunchedEffect(Unit) {
@@ -67,6 +70,7 @@ fun AppNavigation(context: Context) {
             if (!isAuthRoute) {
                 AppDrawerSheet(
                     forums = homeViewModel.forumList,
+                    isAdmin = (homeViewModel.userRole == "ADMIN"),
                     onForumClick = { forumId ->
                         navController.navigate(Screen.ForumTopics.createRoute(forumId))
                         scope.launch { drawerState.close() }
@@ -74,6 +78,19 @@ fun AppNavigation(context: Context) {
                     onNavigate = { route ->
                         navController.navigate(route)
                         scope.launch { drawerState.close() }
+                    },
+                    onAddForum = {
+                        forumToEdit = null
+                        forumTitleText = ""
+                        showForumDialog = true
+                    },
+                    onEditForum = { forum ->
+                        forumToEdit = forum
+                        forumTitleText = forum.title
+                        showForumDialog = true
+                    },
+                    onDeleteForum = { id ->
+                        homeViewModel.onDeleteForum(id)
                     }
                 )
             }
@@ -128,6 +145,37 @@ fun AppNavigation(context: Context) {
                     },
                     dismissButton = {
                         TextButton(onClick = { showDeleteConfirm = false }) { Text("CANCELAR") }
+                    }
+                )
+            }
+            if (showForumDialog) {
+                AlertDialog(
+                    onDismissRequest = { showForumDialog = false },
+                    title = { Text(if (forumToEdit == null) "Nuevo Foro" else "Editar Foro") },
+                    text = {
+                        OutlinedTextField(
+                            value = forumTitleText,
+                            onValueChange = { forumTitleText = it },
+                            label = { Text("Título del foro") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            if (forumTitleText.isNotBlank()) {
+                                if (forumToEdit == null) {
+                                    homeViewModel.onCreateForum(forumTitleText)
+                                } else {
+                                    homeViewModel.onEditForum(forumToEdit!!.id!!,forumTitleText)
+                                }
+                                showForumDialog = false
+                                forumTitleText = ""
+                            }
+                        }) { Text("GUARDAR") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showForumDialog = false }) { Text("CANCELAR") }
                     }
                 )
             }
@@ -203,8 +251,12 @@ fun AppNavigation(context: Context) {
 @Composable
 fun AppDrawerSheet(
     forums: List<ForumEntityDTO>,
+    isAdmin: Boolean, // Añadimos este parámetro
     onForumClick: (Long) -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onAddForum: () -> Unit,      // Callback para añadir
+    onEditForum: (ForumEntityDTO) -> Unit, // Callback para editar
+    onDeleteForum: (Long) -> Unit // Callback para eliminar
 ) {
     ModalDrawerSheet {
         Box(
@@ -218,26 +270,45 @@ fun AppDrawerSheet(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "TEMÁTICAS",
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "TEMÁTICAS",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            // BOTÓN AÑADIR (Solo Admin)
+            if (isAdmin) {
+                IconButton(onClick = onAddForum, modifier = Modifier.size(24.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Añadir Foro", tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+        }
 
         if (forums.isEmpty()) {
-            Text(
-                "Cargando foros...",
-                modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.bodySmall
-            )
+            Text("Cargando foros...", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
         } else {
             forums.forEach { forum ->
                 NavigationDrawerItem(
-                    label = { Text(forum.title) },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(forum.title, modifier = Modifier.weight(1f))
+                            if (isAdmin) {
+                                IconButton(onClick = { onEditForum(forum) }, modifier = Modifier.size(32.dp)) {
+                                    Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
+                                }
+                                IconButton(onClick = { onDeleteForum(forum.id!!) }, modifier = Modifier.size(32.dp)) {
+                                    Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(18.dp))
+                                }
+                            }
+                        }
+                    },
                     selected = false,
                     icon = { Icon(Icons.Default.List, contentDescription = null) },
-                    onClick = { onForumClick(forum.id) },
+                    onClick = { onForumClick(forum.id!!) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }

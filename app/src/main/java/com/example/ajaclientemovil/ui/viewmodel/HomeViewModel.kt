@@ -212,6 +212,89 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 .onFailure { /* Manejar error */ }
         }
     }
+
+    /**
+     * Crea un nuevo foro.
+     * @param title Título del nuevo foro.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
+    fun onCreateForum(title: String) {
+        viewModelScope.launch {
+            isLoading = true
+            val result = forumRepository.saveForum(ForumEntityDTO(title = title), isEdit = false)
+
+            result.onSuccess {
+                fetchForums() // Recarga la lista para que se vea el cambio
+            }.onFailure { e ->
+                errorMessage = "Error al crear: ${e.message}"
+            }
+            isLoading = false
+        }
+    }
+
+    /**
+     * Edita un foro existente.
+     * @param id Identificador del foro a editar.
+     * @param newTitle Nuevo título del foro.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
+    fun onEditForum(id: Long, newTitle: String) {
+        if (newTitle.isBlank()) {
+            errorMessage = "El título no puede estar vacío"
+            return
+        }
+
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+
+            // Creamos el DTO con el ID existente y el nuevo título
+            val forumDto = ForumEntityDTO(id = id, title = newTitle)
+
+            val result = forumRepository.saveForum(forumDto, isEdit = true)
+
+            result.onSuccess {
+                // Si el servidor responde OK, refrescamos la lista del Drawer
+                fetchForums()
+            }.onFailure { e ->
+                errorMessage = "Error al editar el foro: ${e.message}"
+            }
+
+            isLoading = false
+        }
+    }
+
+    /**
+     * Elimina un foro específico.
+     * @param id Identificador del foro a eliminar.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
+    fun onDeleteForum(id: Long) {
+        viewModelScope.launch {
+            isLoading = true
+            // Aquí se "usa" la otra función
+            val result = forumRepository.deleteForum(id)
+
+            result.onSuccess {
+                fetchForums()
+            }.onFailure { e ->
+                errorMessage = "Error al eliminar: ${e.message}"
+            }
+            isLoading = false
+        }
+    }
+
+    // ---TOPICS---
+
+    /**
+     * Obtiene la lista de temas de un foro específico.
+     * @param forumId Identificador del foro del que se quieren obtener los temas.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
     fun fetchTopicsByForum(forumId: Long, onResult: (List<TopicEntityDTO>) -> Unit) {
         viewModelScope.launch {
             forumRepository.getTopicsByForum(forumId)
@@ -220,7 +303,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-// ---TOPICS---
+
     /**
      * Comprueba si el usuario actual puede gestionar un tema.
      * @param topicOwnerId Identificador del propietario del tema.
