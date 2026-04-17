@@ -10,10 +10,14 @@ import com.example.ajaclientemovil.data.UserEntityDTO
  * * Adaptado según la implementación del servidor: el token se identifica como "JWT_TOKEN".
  */
 object SessionManager {
-    // Nombre del archivo de preferencias
+    /**
+     * Nombre del archivo de preferencias.
+     */
     private const val PREFS_NAME = "aja_session_prefs"
 
-    // Llaves para identificar los datos
+    /**
+     * Claves para acceder a los datos de sesión.
+     */
     private const val KEY_JWT_TOKEN = "jwt_token"
     private const val KEY_USER_ID = "user_id"
     private const val KEY_USER_ROLE = "user_role"

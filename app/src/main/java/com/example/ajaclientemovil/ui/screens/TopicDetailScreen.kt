@@ -118,7 +118,7 @@ fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
             }
         }
 
-        // Barra inferior para responder (tu código actual)
+        // Barra inferior para responder
         Surface(tonalElevation = 3.dp) {
             Row(modifier = Modifier.padding(8.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(

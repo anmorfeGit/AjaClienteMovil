@@ -6,6 +6,10 @@ import com.example.ajaclientemovil.data.PostNewDTO
 import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
 
+/**
+ * Repositorio encargado de gestionar los datos de posts.
+ * @param context El contexto de la aplicación necesario para acceder a archivos.
+ */
 class PostRepository(private val context: Context) {
     private val apiService = NetworkManager.apiService
     private fun getToken() = "JWT_TOKEN=${SessionManager.getToken(context)}"

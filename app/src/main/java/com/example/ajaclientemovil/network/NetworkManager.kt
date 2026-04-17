@@ -29,7 +29,9 @@ import java.time.LocalDate
  * 3. Gestión manual de Cookies para compatibilidad con el JWT del servidor.
  */
 object NetworkManager {
-    // URL base del servidor
+    /**
+     * URL base del servidor.
+     */
     private const val BASE_URL = "https://ajaserver.mel0n.dev"
 
     /**
@@ -66,6 +68,7 @@ object NetworkManager {
      * Se utiliza el cliente "Unsafe" para garantizar la conexión con el servidor de desarrollo.
      */
     private val client = getUnsafeOkHttpClient()
+
     private val gson = GsonBuilder().create()
 
     private val retrofit = Retrofit.Builder()
@@ -74,7 +77,10 @@ object NetworkManager {
         .addConverterFactory(GsonConverterFactory.create(gson))
         .build()
 
-    // Servicio que expone los métodos definidos en la interfaz AjaApiService
+    /**
+     * Interfaz que define los puntos de acceso (endpoints) de la API de autenticación.
+     * Se encarga de la comunicación asíncrona con el backend de Spring Boot.
+     */
     val apiService: AjaApiService = retrofit.create(AjaApiService::class.java)
 
     /**

@@ -419,16 +419,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         return isAdmin || currentUserId == postUserId
     }
 
-    /**
-     * Edita un mensaje existente.
-     * @param postId Identificador del mensaje a editar.
-     * @param newText Nuevo contenido del mensaje.
-     * @param topicId Identificador del tema al que pertenece el mensaje.
-     * @param onSuccess Callback que se ejecuta tras una edición exitosa.
-     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
-     * el hilo principal de la interfaz.
-     */
-    // --- PERMISOS (Devuelven Boolean) ---
 
     /**
      * Comprueba si el usuario actual puede editar un mensaje.
