@@ -146,7 +146,7 @@ fun LoginScreen(
                     Button(
                         onClick = { viewModel.onLoginClicked(username, password, onLoginSuccess) },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = MaterialTheme.shapes.large, // Mismo redondeado que los inputs
+                        shape = MaterialTheme.shapes.large,
                         elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                     ) {
                         Text("ENTRAR", fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)

@@ -43,6 +43,10 @@ android {
 }
 
 dependencies {
+    testImplementation("io.mockk:mockk-android:1.13.8")
+    testImplementation("io.mockk:mockk:1.10.2")
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk-agent-jvm:1.13.8")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

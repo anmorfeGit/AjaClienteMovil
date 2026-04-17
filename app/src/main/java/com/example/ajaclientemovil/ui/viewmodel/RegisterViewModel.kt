@@ -22,6 +22,14 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
     var errorMessage by mutableStateOf<String?>(null)
     var successMessage by mutableStateOf<String?>(null)
 
+    /**
+     * Procesa el registro de un nuevo usuario.
+     * @param user Nombre de usuario capturado en el TextField.
+     * @param email Email capturado en el TextField.
+     * @param pass Contraseña capturada en el TextField.
+     * @param confirmPass Confirmación de contraseña capturada en el TextField.
+     * @param onSuccess Callback que se ejecuta cuando el registro es exitoso.
+     */
     fun onRegisterClicked(user: String, email: String, pass: String, confirmPass: String, onSuccess: () -> Unit) {
         // Validaciones locales para campos obligatorios
         if (user.isBlank() || email.isBlank() || pass.isBlank()) {

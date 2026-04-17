@@ -23,6 +23,10 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
  * Pantalla de visualización y edición del perfil del usuario logueado.
  * * Permite modificar el email y la contraseña, y muestra datos informativos
  * como el rol y la fecha de registro.
+ * * Utiliza [HomeViewModel] para gestionar la lógica de negocio.
+ * @param viewModel Modelo de vista asociado a esta pantalla.
+ * @param onLogout Callback para cerrar sesión.
+ * @receiver [HomeViewModel] asociado a esta pantalla.
  */
 @Composable
 fun MyProfileScreen(

@@ -179,12 +179,12 @@ data class PostEditDTO(
  */
 data class PostEntityDTO(
     val id: Long,
-    val messageNumber: Long,
-    val user: UserEntityDTO,
+    val messageNumber: Long? = null,
+    val user: UserEntityDTO? = null,
     val text: String,
-    val creationDate: String?,
-    val lastModification: String?,
-    val topic: TopicEntityDTO
+    val creationDate: String? = null,
+    val lastModification: String? = null,
+    val topic: TopicEntityDTO? = null
 )
 
 /**

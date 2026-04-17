@@ -21,6 +21,14 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModel
 
+/**
+ * Interfaz de usuario para el registro de usuarios.
+ * Se comunica con [RegisterViewModel] para gestionar los eventos y estados.
+ * @param viewModel Modelo de vista asociado al registro de usuarios.
+ * @param onBackToLogin Callback para volver a la pantalla de inicio de sesión.
+ * @receiver [RegisterViewModel] asociado a esta pantalla.
+ * @return Composición de la pantalla de registro de usuarios.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(

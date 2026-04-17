@@ -5,6 +5,7 @@ import com.example.ajaclientemovil.data.ForumListDTO
 import com.example.ajaclientemovil.data.GenericResponse
 import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.PostEditDTO
+import com.example.ajaclientemovil.data.PostEntityDTO
 import com.example.ajaclientemovil.data.PostListResponse
 import com.example.ajaclientemovil.data.PostNewDTO
 import com.example.ajaclientemovil.data.TopicEditDTO
@@ -313,7 +314,7 @@ interface AjaApiService {
     @PUT("/api/post")
     suspend fun editPost(
         @Header("Cookie") token: String,
-        @Body postEditDTO: PostEditDTO
+        @Body postEditDTO: PostEntityDTO
     ): Response<Map<String, Any>>
 
     /**
@@ -328,6 +329,8 @@ interface AjaApiService {
         @Header("Cookie") token: String,
         @Path("id") id: Long
     ): Response<Map<String, Any>>
+
+
 }
 
 

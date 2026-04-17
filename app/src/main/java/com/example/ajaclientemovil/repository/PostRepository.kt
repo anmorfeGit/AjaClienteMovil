@@ -8,6 +8,7 @@ import com.example.ajaclientemovil.network.SessionManager
 
 class PostRepository(private val context: Context) {
     private val apiService = NetworkManager.apiService
+    private fun getToken() = "JWT_TOKEN=${SessionManager.getToken(context)}"
 
     /**
      * Obtiene todos los posts de un tema específico.
@@ -22,7 +23,7 @@ class PostRepository(private val context: Context) {
             if (response.isSuccessful && response.body() != null) {
                 // Filtramos por el ID del Topic y ordenamos por número de mensaje
                 val filtered = response.body()!!.message
-                    .filter { it.topic.id == topicId }
+                    .filter { it.topic?.id == topicId }
                     .sortedBy { it.messageNumber }
                 Result.success(filtered)
             } else Result.failure(Exception("Error al obtener mensajes"))
@@ -43,5 +44,34 @@ class PostRepository(private val context: Context) {
         } catch (e: Exception) { Result.failure(e) }
     }
 
+    /**
+     * Elimina un post específico.
+     * @param postId Identificador del post a eliminar.
+     * @return [Result] con el resultado de la operación.
+     */
+    suspend fun deletePost(postId: Long): Result<Unit> {
+        return try {
+            val response = apiService.deletePost(getToken(), postId)
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al borrar el post"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Actualiza un post existente.
+     * @param post Objeto [PostEntityDTO] con los datos actualizados del post.
+     * @return [Result] con el resultado de la operación.
+     */
+    suspend fun updatePost(post: PostEntityDTO): Result<Unit> {
+        return try {
+            val response = apiService.editPost(getToken(), post)
+            if (response.isSuccessful) Result.success(Unit)
+            else Result.failure(Exception("Error al actualizar el post"))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
 }

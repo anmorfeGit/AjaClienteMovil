@@ -91,6 +91,12 @@ object SessionManager {
         return sharedPref.getString(KEY_USERNAME, null) ?: ""
     }
 
+    /**
+     * Recupera el email guardado.
+     * Devuelve un String vacío si no existe para evitar errores en la UI.
+     * @param context Contexto de la aplicación.
+     * @return El email o un String vacío si no existe.
+     */
     fun getEmail(context: Context): String {
         val sharedPref = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         return sharedPref.getString(KEY_EMAIL, null) ?: ""

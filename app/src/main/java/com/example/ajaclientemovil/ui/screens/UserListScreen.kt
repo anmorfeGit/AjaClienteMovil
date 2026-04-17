@@ -25,6 +25,8 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
  * Pantalla de administración para la visualización del listado de usuarios.
  * * Utiliza un LazyColumn para mostrar la lista de usuarios con su información.
  * * Esta pantalla es exclusiva para usuarios con rol 'ADMIN'.
+ * @param viewModel Modelo de vista asociado a esta pantalla.
+ * @receiver [HomeViewModel] asociado a esta pantalla.
  */
 @Composable
 fun UserListScreen(viewModel: HomeViewModel = viewModel()) {

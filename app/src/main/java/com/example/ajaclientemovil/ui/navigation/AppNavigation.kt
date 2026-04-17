@@ -251,7 +251,7 @@ fun AppNavigation(context: Context) {
 @Composable
 fun AppDrawerSheet(
     forums: List<ForumEntityDTO>,
-    isAdmin: Boolean, // Añadimos este parámetro
+    isAdmin: Boolean,
     onForumClick: (Long) -> Unit,
     onNavigate: (String) -> Unit,
     onAddForum: () -> Unit,      // Callback para añadir

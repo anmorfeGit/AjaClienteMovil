@@ -103,10 +103,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Procesa la actualización de los datos del perfil del usuario.
      * * Envía los cambios al repositorio y, si tiene éxito, refresca la sesión local.
      * @param onSuccess Callback que se ejecuta tras una actualización exitosa.
+     * @param onUsernameChanged Callback que se ejecuta tras un cambio de nombre de usuario.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
      */
-    /**
-     * Procesa la actualización de los datos del perfil del usuario.
-     */
+
     fun onUpdateProfileClicked(onSuccess: () -> Unit, onUsernameChanged: () -> Unit) {
         if (password.isEmpty()) {
             errorMessage = "Debes introducir tu contraseña para confirmar los cambios"
@@ -208,8 +209,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun fetchForums() {
         viewModelScope.launch {
             forumRepository.getForums()
-                .onSuccess { forumList = it }
-                .onFailure { /* Manejar error */ }
+                .onSuccess { list ->
+                    forumList = list.sortedBy { it.creationDate ?: "" }
+                }
+                .onFailure { e ->
+                    errorMessage = "Error al cargar foros: ${e.message}"
+                }
         }
     }
 
@@ -305,16 +310,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
 
     /**
-     * Comprueba si el usuario actual puede gestionar un tema.
+     * Comprueba si el usuario actual puede editar un tema.
      * @param topicOwnerId Identificador del propietario del tema.
      * @return True si el usuario puede gestionar el tema, False en caso contrario.
      */
-    fun canManageTopic(topicOwnerId: Long): Boolean {
+    fun canEditTopic(topicOwnerId: Long): Boolean {
         val currentUserId = SessionManager.getUser(getApplication())?.id
         val isAdmin = SessionManager.getRole(getApplication()) == "ADMIN"
         return isAdmin || currentUserId == topicOwnerId
     }
 
+    /**
+     * Comprueba si el usuario actual puede eliminar un tema.
+     * @return True si el usuario puede eliminar el tema, False en caso contrario.
+     */
+    fun canDeleteTopic(): Boolean {
+        return SessionManager.getRole(getApplication()) == "ADMIN"
+    }
     /**
      * Crea un nuevo tema en un foro específico.
      * @param title Título del nuevo tema.
@@ -354,7 +366,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             isLoading = true
             postRepository.getPostsByTopic(topicId)
-                .onSuccess { postList = it }
+                .onSuccess { list ->
+                    postList = list.sortedBy { it.messageNumber } }
                 .onFailure { errorMessage = it.message }
             isLoading = false
         }
@@ -406,4 +419,82 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         return isAdmin || currentUserId == postUserId
     }
 
+    /**
+     * Edita un mensaje existente.
+     * @param postId Identificador del mensaje a editar.
+     * @param newText Nuevo contenido del mensaje.
+     * @param topicId Identificador del tema al que pertenece el mensaje.
+     * @param onSuccess Callback que se ejecuta tras una edición exitosa.
+     * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
+     * el hilo principal de la interfaz.
+     */
+    // --- PERMISOS (Devuelven Boolean) ---
+
+    /**
+     * Comprueba si el usuario actual puede editar un mensaje.
+     * @param postUserId Identificador del autor del mensaje.
+     * @return True si el usuario puede editar el mensaje, False en caso contrario.
+     */
+    fun canEditPost(postUserId: Long): Boolean {
+        val currentUserId = SessionManager.getUser(getApplication())?.id
+        return currentUserId == postUserId
+    }
+
+    /**
+     * Comprueba si el usuario actual puede eliminar un mensaje.
+     * @param postUserId Identificador del autor del mensaje.
+     * @return True si el usuario puede eliminar el mensaje, False en caso contrario.
+     */
+    fun canDeletePost(postUserId: Long): Boolean {
+        val currentUserId = SessionManager.getUser(getApplication())?.id
+        val isAdmin = SessionManager.getRole(getApplication()) == "ADMIN"
+        return isAdmin || currentUserId == postUserId
+    }
+
+// --- ACCIONES (Llaman al repositorio) ---
+
+    /**
+     * Elimina un mensaje específico.
+     * @param postId Identificador del mensaje a eliminar.
+     * @param topicId Identificador del tema al que pertenece el mensaje.
+     */
+    fun onDeletePost(postId: Long, topicId: Long) {
+        viewModelScope.launch {
+            isLoading = true
+            postRepository.deletePost(postId)
+                .onSuccess {
+                    fetchPostsByTopic(topicId) // Refresca la lista
+                }
+                .onFailure { errorMessage = "No se pudo eliminar: ${it.message}" }
+            isLoading = false
+        }
+    }
+
+    /**
+     * Edita un mensaje existente.
+     * @param postId Identificador del mensaje a editar.
+     * @param newText Nuevo contenido del mensaje.
+     * @param topicId Identificador del tema al que pertenece el mensaje.
+     * @param onSuccess Callback que se ejecuta tras una edición exitosa
+     */
+    fun onEditPost(postId: Long, newText: String, topicId: Long, onSuccess: () -> Unit) {
+        if (newText.isBlank()) {
+            errorMessage = "El mensaje no puede estar vacío"
+            return
+        }
+
+        viewModelScope.launch {
+            isLoading = true
+            // Si aquí da error, asegúrate de que tu DTO permita user = null
+            val postDto = PostEntityDTO(id = postId, text = newText)
+
+            postRepository.updatePost(postDto)
+                .onSuccess {
+                    fetchPostsByTopic(topicId)
+                    onSuccess()
+                }
+                .onFailure { errorMessage = it.message }
+            isLoading = false
+        }
+    }
 }

@@ -105,10 +105,11 @@ fun ForumTopicsScreen(
                     items(topics) { topic ->
                         TopicItem(
                             topic = topic,
-                            canManage = viewModel.canManageTopic(topic.userOwner.id),
+                            // Usamos las dos funciones nuevas del ViewModel
+                            canEdit = viewModel.canEditTopic(topic.userOwner.id),
+                            canDelete = viewModel.canDeleteTopic(),
                             onClick = { onTopicClick(topic.id) },
                             onEdit = {
-                                // Al pulsar editar, cargamos los datos en el estado
                                 topicToEdit = topic
                                 editTitle = topic.title
                                 showEditDialog = true
@@ -199,7 +200,8 @@ fun ForumTopicsScreen(
 @Composable
 fun TopicItem(
     topic: TopicEntityDTO,
-    canManage: Boolean,
+    canEdit: Boolean,    // Cambiado de canManage
+    canDelete: Boolean,  // Nuevo parámetro
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -210,16 +212,20 @@ fun TopicItem(
         supportingContent = { Text("Por ${topic.userOwner.username}") },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (canManage) {
-                    // BOTÓN EDITAR (Añadido)
+                // El lápiz aparece para el dueño y el admin
+                if (canEdit) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color.Gray)
                     }
-                    // BOTÓN BORRAR
+                }
+
+                // La papelera aparece SOLO para el admin
+                if (canDelete) {
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Delete, contentDescription = "Borrar", tint = Color.Red)
                     }
                 }
+
                 Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
             }
         }
