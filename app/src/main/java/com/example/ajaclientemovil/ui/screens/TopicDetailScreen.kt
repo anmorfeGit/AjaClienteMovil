@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
@@ -57,6 +58,14 @@ fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
     var showEditDialog by remember { mutableStateOf(false) }
     var postToEdit by remember { mutableStateOf<PostEntityDTO?>(null) }
     var editPostText by remember { mutableStateOf("") }
+    // Estado para el desplazamiento de la lista
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(viewModel.postList.size) {
+        if (viewModel.postList.isNotEmpty()) {
+            listState.animateScrollToItem(viewModel.postList.size - 1)
+        }
+    }
 
     LaunchedEffect(topicId) {
         viewModel.fetchPostsByTopic(topicId)
@@ -64,6 +73,7 @@ fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
 
     Column(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.weight(1f).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {

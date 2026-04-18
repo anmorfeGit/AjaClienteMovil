@@ -348,10 +348,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * @param topicId Identificador del tema a eliminar.
      * @param forumId Identificador del foro al que pertenece el tema.
      */
-    fun onDeleteTopic(topicId: Long, forumId: Long, function: () -> Unit) {
+    fun onDeleteTopic(topicId: Long, forumId: Long, onComplete: () -> Unit) {
         viewModelScope.launch {
             forumRepository.deleteTopic(topicId)
-                .onSuccess { fetchTopicsByForum(forumId) { /* Actualizar lista UI */ } }
+                .onSuccess { onComplete()}
                 .onFailure { errorMessage = it.message }
         }
     }
@@ -372,6 +372,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             isLoading = false
         }
     }
+
 
     /**
      * Edita un tema específico.
