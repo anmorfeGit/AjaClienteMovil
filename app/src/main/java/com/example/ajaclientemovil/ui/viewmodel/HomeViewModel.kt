@@ -488,4 +488,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             isLoading = false
         }
     }
+
+
+    /**
+     * Cambia el role de un usuario (ADMIN - USER).
+     *
+     * Si el role actual del usuario es "USER" lo promociona a ADMIN,
+     * y si ya es "ADMIN" lo degrada a USER.
+     * Tras el cambio exitoso recarga la lista de usuarios para reflejar
+     * el nuevo estado en la interfaz.
+     *
+     * @param user Usuario cuyo role se desea cambiar.
+     */
+
+    fun onChangeUserRole(user: UserEntityDTO) {
+        val toAdmin = user.role != "ADMIN"
+        viewModelScope.launch {
+            userRepository.updateUserRole(user.id, toAdmin)
+                .onSuccess {
+                    fetchUsers()
+                }
+                .onFailure { error ->
+                    errorMessage = error.message
+                }
+        }
+    }
 }

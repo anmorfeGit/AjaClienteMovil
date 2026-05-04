@@ -22,6 +22,7 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -329,6 +330,31 @@ interface AjaApiService {
         @Header("Cookie") token: String,
         @Path("id") id: Long
     ): Response<Map<String, Any>>
+
+    /**
+     * Asigna un rol de administrador a un usuario.
+     *@param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @param id Identificador único del usuario al que se le asignará el rol.
+     * @return Una [Response] con el estado de la operación.
+     */
+    @PATCH("/api/user/{id}/roles/admin")
+    suspend fun setRoleAdmin(
+        @Header("Cookie") token: String,
+        @Path("id") id: Long
+    ): Response<Map<String, Any>>
+
+    /**
+     * Asigna un rol de usuario a un usuario.
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @param id Identificador único del usuario al que se le asignará el rol.
+     * @return Una [Response] con el estado de la operación.
+     */
+    @PATCH("/api/user/{id}/roles/user")
+    suspend fun setRoleUser(
+        @Header("Cookie") token: String,
+        @Path("id") id: Long
+    ): Response<Map<String, Any>>
+
 
 
 }

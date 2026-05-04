@@ -4,12 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonOff
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -54,7 +58,7 @@ fun UserListScreen(viewModel: HomeViewModel = viewModel()) {
         )
 
         // --- LISTA FILTRADA ---
-        Box(modifier = Modifier.weight(1f)) { // El peso 1f hace que la lista ocupe el resto
+        Box(modifier = Modifier.weight(1f)) {
             if (viewModel.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (viewModel.filteredUserList.isEmpty()) {
@@ -79,25 +83,43 @@ fun UserListScreen(viewModel: HomeViewModel = viewModel()) {
                                 )
                             },
                             trailingContent = {
-                                if (user.role != "ADMIN") {
-                                    Row {
+                                Row {
+                                    // Botón activar/desactivar — solo para usuarios normales
+                                    if (user.role != "ADMIN") {
                                         IconButton(onClick = { viewModel.onToggleUserStatus(user) }) {
                                             Icon(
-                                                imageVector = if (user.isActive) Icons.Default.Lock else Icons.Default.Refresh,
+                                                imageVector = if (user.isActive) Icons.Default.Lock
+                                                else Icons.Default.Refresh,
                                                 contentDescription = "Estado",
                                                 tint = MaterialTheme.colorScheme.primary
                                             )
                                         }
-                                        IconButton(onClick = { viewModel.onDeleteUserByAdmin(user.id) }) {
-                                            Icon(
-                                                imageVector = Icons.Default.Delete,
-                                                contentDescription = "Eliminar",
-                                                tint = Color.Red
-                                            )
-                                        }
+                                    }
+
+                                    // Botón cambiar role — siempre visible
+                                    IconButton(onClick = { viewModel.onChangeUserRole(user) }) {
+                                        Icon(
+                                            imageVector = if (user.role == "ADMIN")
+                                                Icons.Default.AdminPanelSettings   // quitar admin → degradar a USER
+                                            else
+                                                Icons.Default.Person, // hacer admin
+                                            contentDescription = if (user.role == "ADMIN") "Quitar admin" else "Hacer admin",
+                                            tint = if (user.role == "ADMIN") Color.Gray
+                                            else MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+
+                                    // Botón eliminar
+                                    IconButton(onClick = { viewModel.onDeleteUserByAdmin(user.id) }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Eliminar",
+                                            tint = Color.Red
+                                        )
                                     }
                                 }
                             }
+
                         )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                     }

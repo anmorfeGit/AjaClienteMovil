@@ -215,5 +215,40 @@ class UserRepository(private val context: Context) {
             Result.failure(e)
         }
     }
+
+
+    /**
+     * Cambia el role del usuario al role indicado (ADMIN o USER).
+     *
+     * El métodó decide qué endpoint llamar según el valor de [toAdmin]:
+     * - true  → PUT /user/{id}/roles/admin
+     * - false → PUT /user/{id}/roles/user
+     *
+     * @param userId  Identificador único del usuario cuyo role se modificará.
+     * @param toAdmin true para promover a ADMIN, false para degradar a USER.
+     * @return [Result] con un mensaje de texto en caso de éxito,
+     *         o una excepción descriptiva en caso de error.
+     */
+
+    suspend fun updateUserRole(userId: Long, isAdmin: Boolean): Result<String> {
+        return try {
+            val token = SessionManager.getToken(context) ?: throw Exception("Sesión expirada")
+            val cookieHeader = "JWT_TOKEN=$token"
+
+            val response = if (isAdmin) {
+                apiService.setRoleAdmin(cookieHeader, userId)
+            } else {
+                apiService.setRoleUser(cookieHeader, userId)
+            }
+
+            if (response.isSuccessful) {
+                Result.success("Rol actualizado")
+            } else {
+                Result.failure(Exception("Error servidor: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
 
