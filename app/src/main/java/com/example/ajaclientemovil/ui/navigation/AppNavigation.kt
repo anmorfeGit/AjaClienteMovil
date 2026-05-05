@@ -1,5 +1,7 @@
 package com.example.ajaclientemovil.ui.navigation
 
+import DirectMessageScreen
+import android.app.Application
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,17 +13,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.example.ajaclientemovil.data.ForumEntityDTO
+import com.example.ajaclientemovil.data.network.AjaApiService
+import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
+import com.example.ajaclientemovil.repository.DirectMessageRepository
 import com.example.ajaclientemovil.ui.screens.*
+import com.example.ajaclientemovil.ui.viewmodel.ChatViewModel
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
+import com.example.ajaclientemovil.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
+import com.example.ajaclientemovil.ui.viewmodel.LoginViewModelFactory
 
 /**
  * Estructura base de navegación de la aplicación.
@@ -34,7 +45,22 @@ fun AppNavigation(context: Context) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val homeViewModel: HomeViewModel = viewModel()
+    val application = context.applicationContext as android.app.Application
+    val apiService = NetworkManager.apiService
+
+    // 1. Instanciamos los repositorios necesarios para HomeViewModel
+    val userRepo = remember { com.example.ajaclientemovil.repository.UserRepository(apiService, context) }
+    val dmRepo = remember { DirectMessageRepository(apiService, context) }
+
+    // 2. Usamos la Factory para crear el HomeViewModel
+    val homeViewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(application, userRepo)
+    )
+
+    // 3. Usamos la Factory para el ChatViewModel
+    val chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModelFactory(dmRepo)
+    )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -46,6 +72,7 @@ fun AppNavigation(context: Context) {
     var forumToEdit by remember { mutableStateOf<ForumEntityDTO?>(null) }
     var forumTitleText by remember { mutableStateOf("") }
 
+
     // Dispara la carga de foros si el usuario ya está logueado al abrir la app
     LaunchedEffect(Unit) {
         if (SessionManager.isUserLoggedIn(context)) {
@@ -55,6 +82,10 @@ fun AppNavigation(context: Context) {
 
     LaunchedEffect(currentRoute) {
         if (drawerState.isOpen) { drawerState.close() }
+        if (currentRoute != Screen.ChatDetail.route &&
+            currentRoute?.startsWith("chat_detail") == false) {
+            chatViewModel.clearChat()
+        }
     }
 
     val startDestination = if (SessionManager.isUserLoggedIn(context)) {
@@ -69,49 +100,33 @@ fun AppNavigation(context: Context) {
         drawerContent = {
             if (!isAuthRoute) {
                 AppDrawerSheet(
-                    forums = homeViewModel.forumList,
-                    isAdmin = (homeViewModel.userRole == "ADMIN"),
-                    onForumClick = { forumId ->
-                        navController.navigate(Screen.ForumTopics.createRoute(forumId))
-                        scope.launch { drawerState.close() }
-                    },
                     onNavigate = { route ->
                         navController.navigate(route)
                         scope.launch { drawerState.close() }
-                    },
-                    onAddForum = {
-                        forumToEdit = null
-                        forumTitleText = ""
-                        showForumDialog = true
-                    },
-                    onEditForum = { forum ->
-                        forumToEdit = forum
-                        forumTitleText = forum.title
-                        showForumDialog = true
-                    },
-                    onDeleteForum = { id ->
-                        homeViewModel.onDeleteForum(id)
                     }
                 )
             }
         }
-    ) {
+    ){
         Scaffold(
             containerColor = if (isAuthRoute) Color.Transparent else MaterialTheme.colorScheme.background,
             topBar = {
                 if (!isAuthRoute) {
                     GlobalTopBar(
-                        title = when (currentRoute) {
-                            Screen.Home.route -> "AJA CLIENTE"
-                            Screen.UserList.route -> "GESTIÓN USUARIOS"
-                            Screen.MyProfile.route -> "MIS DATOS"
+                        title = when {
+                            currentRoute == Screen.Home.route -> "AJA CLIENTE"
+                            currentRoute == Screen.UserList.route -> "DIRECTORIO"
+                            currentRoute == Screen.AdminList.route -> "GESTIÓN DE USUARIOS"
+                            currentRoute == Screen.MyProfile.route -> "MIS DATOS"
+                            currentRoute == Screen.DirectMessages.route -> "MIS MENSAJES"
+                            currentRoute?.startsWith("chat_detail") == true -> "CHAT"
                             else -> "AJA"
                         },
                         username = homeViewModel.username,
                         isAdmin = (homeViewModel.userRole == "ADMIN"),
                         onMenuClick = { scope.launch { drawerState.open() } },
                         onProfileClick = { navController.navigate(Screen.MyProfile.route) },
-                        onAdminClick = { navController.navigate(Screen.UserList.route) },
+                        onAdminClick = { navController.navigate(Screen.AdminList.route) },
                         onLogoutClick = {
                             homeViewModel.onLogoutClicked {
                                 navController.navigate(Screen.Login.route) {
@@ -186,24 +201,73 @@ fun AppNavigation(context: Context) {
                     startDestination = startDestination
                 ) {
                     composable(Screen.Login.route) {
+                        // 1. Instanciamos la Factory
+                        val loginFactory = LoginViewModelFactory(
+                            application = context.applicationContext as Application,
+                            userRepository = userRepo // Este es el repo que creaste al inicio de AppNavigation
+                        )
+
+                        // 2. Creamos el ViewModel usando la Factory
+                        val loginViewModel: LoginViewModel = viewModel(factory = loginFactory)
+
+                        // 3. Se lo pasamos a la pantalla
                         LoginScreen(
+                            viewModel = loginViewModel,
                             onLoginSuccess = {
                                 homeViewModel.refreshSessionData()
-                                homeViewModel.fetchForums() // Cargar foros tras login exitoso
+                                homeViewModel.fetchForums()
                                 navController.navigate(Screen.Home.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
                             },
-                            onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                            onNavigateToRegister = {
+                                navController.navigate(Screen.Register.route)
+                            }
                         )
                     }
                     composable(Screen.Register.route) {
                         RegisterScreen(onBackToLogin = { navController.popBackStack() })
                     }
-                    composable(Screen.Home.route) { HomeScreen() }
-                    composable(Screen.UserList.route) { UserListScreen() }
+                    composable(Screen.Home.route) {
+                        HomeScreen(
+                            viewModel = homeViewModel,
+                            onForumClick = { forumId ->
+                                navController.navigate(Screen.ForumTopics.createRoute(forumId))
+                            },
+                            onAddForum = {
+                                forumToEdit = null
+                                forumTitleText = ""
+                                showForumDialog = true
+                            },
+                            onEditForum = { forum ->
+                                forumToEdit = forum
+                                forumTitleText = forum.title
+                                showForumDialog = true
+                            },
+                            onDeleteForum = { id ->
+                                homeViewModel.onDeleteForum(id)
+                            }
+                        )
+                    }
+                    composable(Screen.UserList.route) {
+                        UserListScreen(
+                            viewModel = homeViewModel,
+                            onUserClick = { userId, username ->
+                                navController.navigate(Screen.ChatDetail.createRoute(userId, username))
+                            }
+                        )
+                    }
+                    composable(Screen.AdminList.route) {
+                        AdminListScreen(
+                            viewModel = homeViewModel,
+                            onUserClick = { userId, username ->
+                                navController.navigate(Screen.ChatDetail.createRoute(userId, username))
+                            }
+                        )
+                    }
                     composable(Screen.MyProfile.route) {
                         MyProfileScreen(
+                            viewModel = homeViewModel,
                             onLogout = {
                                 navController.navigate(Screen.Login.route) {
                                     popUpTo(0) { inclusive = true }
@@ -232,7 +296,34 @@ fun AppNavigation(context: Context) {
                         val topicId = backStackEntry.arguments?.getLong("topicId") ?: -1L
                         TopicDetailScreen(topicId = topicId, viewModel = homeViewModel)
                     }
+                    composable(Screen.DirectMessages.route) {
+                        DirectMessageScreen(
+                            viewModel = chatViewModel,
+                            isAdmin = homeViewModel.userRole == "ADMIN",
+                            onConversationClick = { userId, username ->
+                                navController.navigate(Screen.ChatDetail.createRoute(userId, username))
+                            }
+                        )
+                    }
+                    composable(
+                        route = Screen.ChatDetail.route,
+                        arguments = listOf(
+                            navArgument("userId") { type = NavType.LongType },
+                            navArgument("username") { type = NavType.StringType }
+                        )
+                    ) { backStackEntry ->
+                        val userId = backStackEntry.arguments?.getLong("userId") ?: -1L
+                        val username = backStackEntry.arguments?.getString("username") ?: "Usuario"
+
+                        ChatDetailScreen(
+                            otherUserId = userId,
+                            otherUserName = username,
+                            viewModel = chatViewModel,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
+
 
                 if (homeViewModel.isLoading) {
                     LoadingOverlay("Procesando...")
@@ -250,13 +341,7 @@ fun AppNavigation(context: Context) {
  */
 @Composable
 fun AppDrawerSheet(
-    forums: List<ForumEntityDTO>,
-    isAdmin: Boolean,
-    onForumClick: (Long) -> Unit,
-    onNavigate: (String) -> Unit,
-    onAddForum: () -> Unit,      // Callback para añadir
-    onEditForum: (ForumEntityDTO) -> Unit, // Callback para editar
-    onDeleteForum: (Long) -> Unit // Callback para eliminar
+    onNavigate: (String) -> Unit
 ) {
     ModalDrawerSheet {
         Box(
@@ -265,62 +350,32 @@ fun AppDrawerSheet(
                 .background(MaterialTheme.colorScheme.primary)
                 .padding(24.dp)
         ) {
-            Text("FOROS AJA", color = Color.White, style = MaterialTheme.typography.titleLarge)
+            Text("MENÚ PRINCIPAL", color = Color.White, style = MaterialTheme.typography.titleLarge)
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "TEMÁTICAS",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
-            // BOTÓN AÑADIR (Solo Admin)
-            if (isAdmin) {
-                IconButton(onClick = onAddForum, modifier = Modifier.size(24.dp)) {
-                    Icon(Icons.Default.Add, contentDescription = "Añadir Foro", tint = MaterialTheme.colorScheme.primary)
-                }
-            }
-        }
-
-        if (forums.isEmpty()) {
-            Text("Cargando foros...", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
-        } else {
-            forums.forEach { forum ->
-                NavigationDrawerItem(
-                    label = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(forum.title, modifier = Modifier.weight(1f))
-                            if (isAdmin) {
-                                IconButton(onClick = { onEditForum(forum) }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.Edit, null, modifier = Modifier.size(18.dp))
-                                }
-                                IconButton(onClick = { onDeleteForum(forum.id!!) }, modifier = Modifier.size(32.dp)) {
-                                    Icon(Icons.Default.Delete, null, tint = Color.Red, modifier = Modifier.size(18.dp))
-                                }
-                            }
-                        }
-                    },
-                    selected = false,
-                    icon = { Icon(Icons.Default.List, contentDescription = null) },
-                    onClick = { onForumClick(forum.id!!) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-            }
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         NavigationDrawerItem(
             label = { Text("Inicio") },
             selected = false,
             icon = { Icon(Icons.Default.Home, null) },
             onClick = { onNavigate(Screen.Home.route) },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Mis Mensajes") },
+            selected = false,
+            icon = { Icon(Icons.Default.Email, null) },
+            onClick = { onNavigate(Screen.DirectMessages.route) },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+
+        NavigationDrawerItem(
+            label = { Text("Directorio de Usuarios") },
+            selected = false,
+            icon = { Icon(Icons.Default.People, null) },
+            onClick = { onNavigate(Screen.UserList.route) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
     }
@@ -371,10 +426,10 @@ fun GlobalTopBar(
                         leadingIcon = { Icon(Icons.Default.Person, null) },
                         onClick = { showMenu = false; onProfileClick() }
                     )
-                    if (isAdmin) {
+                    if(isAdmin){
                         DropdownMenuItem(
-                            text = { Text("Gestión Usuarios") },
-                            leadingIcon = { Icon(Icons.Default.Settings, null) },
+                            text = { Text("Gestión de Usuarios") },
+                            leadingIcon = { Icon(Icons.Default.People, null) },
                             onClick = { showMenu = false; onAdminClick() }
                         )
                     }
@@ -418,5 +473,27 @@ fun LoadingOverlay(message: String) {
                 Text(message)
             }
         }
+    }
+}
+
+class ChatViewModelFactory(private val repository: DirectMessageRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ChatViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+class HomeViewModelFactory(
+    private val application: android.app.Application,
+    private val userRepository: com.example.ajaclientemovil.repository.UserRepository,
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return HomeViewModel(application, userRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

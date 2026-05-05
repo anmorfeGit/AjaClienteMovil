@@ -107,8 +107,7 @@ object NetworkManager {
                     val token = cookieHeader?.split(";")?.firstOrNull { it.contains("JWT_TOKEN") }
                         ?.split("=")?.getOrNull(1)
 
-                    val jsonUser = gson.toJson(body.message)
-                    val userDto = gson.fromJson(jsonUser, UserEntityDTO::class.java)
+                    val userDto = body.message
 
                     Triple(userDto, null, token)
                 } else {

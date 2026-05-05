@@ -19,10 +19,16 @@ sealed class Screen(val route: String) {
     object Home : Screen("home_screen")
 
     /**
-     * Objeto que representa la pantalla de gestión de usuarios.
+     * Objeto que representa la pantalla de mensajes de usuarios.
      * @property route Ruta asociada a esta pantalla.
      */
     object UserList : Screen("user_list")
+
+    /**
+     * Objeto que representa la pantalla de administración de usuarios.
+     * @property route Ruta asociada a esta pantalla.
+     */
+    object AdminList : Screen("admin_list")
 
     /**
      * Objeto que representa la pantalla de perfil del usuario.
@@ -53,6 +59,20 @@ sealed class Screen(val route: String) {
          * @param topicId Identificador único del tema.
          */
         fun createRoute(topicId: Long) = "topic_detail/$topicId"
+    }
+
+    /**
+     * Objeto que representa la pantalla de mensajes directos.
+     * @property route Ruta asociada a esta pantalla.
+     */
+    object DirectMessages : Screen("direct_messages")
+
+    /**
+     * Objeto que representa la pantalla de un chat.
+     * @property route Ruta asociada a esta pantalla.
+     */
+    object ChatDetail : Screen("chat_detail/{userId}/{username}") {
+        fun createRoute(userId: Long, username: String) = "chat_detail/$userId/$username"
     }
 }
 

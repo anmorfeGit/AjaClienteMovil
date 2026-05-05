@@ -1,54 +1,70 @@
 package com.example.ajaclientemovil.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonOff
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ajaclientemovil.data.UserEntityDmDTO
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 
-/**
- * Pantalla de administración para la visualización del listado de usuarios.
- * * Utiliza un LazyColumn para mostrar la lista de usuarios con su información.
- * * Esta pantalla es exclusiva para usuarios con rol 'ADMIN'.
- * @param viewModel Modelo de vista asociado a esta pantalla.
- * @receiver [HomeViewModel] asociado a esta pantalla.
- */
 @Composable
-fun UserListScreen(viewModel: HomeViewModel = viewModel()) {
-    LaunchedEffect(Unit) { viewModel.fetchUsers() }
+fun UserListScreen(
+    viewModel: HomeViewModel,
+    onUserClick: (Long, String) -> Unit
+) {
+    // Carga de la lista de DMs al iniciar
+    LaunchedEffect(Unit) {
+        viewModel.fetchUsersForDM()
+    }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        // --- BUSCADOR ---
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        // --- BUSCADOR POR NOMBRE ---
         OutlinedTextField(
             value = viewModel.searchQuery,
-            onValueChange = { viewModel.searchQuery = it },
+            onValueChange = {
+                viewModel.searchQuery = it
+                viewModel.applyDMFilter()
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            placeholder = { Text("Buscar por nombre o email...") },
+            placeholder = { Text("Buscar usuario...") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
                 if (viewModel.searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { viewModel.searchQuery = "" }) {
+                    IconButton(onClick = {
+                        viewModel.searchQuery = ""
+                        viewModel.applyDMFilter()
+                    }) {
                         Icon(Icons.Default.Clear, contentDescription = "Limpiar")
                     }
                 }
@@ -57,74 +73,64 @@ fun UserListScreen(viewModel: HomeViewModel = viewModel()) {
             singleLine = true
         )
 
-        // --- LISTA FILTRADA ---
+        // --- LISTA DE USUARIOS ---
         Box(modifier = Modifier.weight(1f)) {
             if (viewModel.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (viewModel.filteredUserList.isEmpty()) {
-                // Mensaje si no hay resultados
+            } else if (viewModel.filteredDMList.isEmpty()) {
                 Text(
-                    text = "No se encontraron usuarios",
+                    text = "No se encontraron resultados",
                     modifier = Modifier.align(Alignment.Center),
-                    color = MaterialTheme.colorScheme.secondary
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
                 )
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    // IMPORTANTE: Usamos la lista filtrada del ViewModel
-                    items(viewModel.filteredUserList) { user ->
-                        ListItem(
-                            headlineContent = { Text(user.username) },
-                            supportingContent = { Text("${user.email} • ${user.role}") },
-                            leadingContent = {
-                                Icon(
-                                    imageVector = if (user.isActive) Icons.Default.CheckCircle else Icons.Default.Warning,
-                                    contentDescription = null,
-                                    tint = if (user.isActive) Color(0xFF4CAF50) else Color.Red
-                                )
-                            },
-                            trailingContent = {
-                                Row {
-                                    // Botón activar/desactivar — solo para usuarios normales
-                                    if (user.role != "ADMIN") {
-                                        IconButton(onClick = { viewModel.onToggleUserStatus(user) }) {
-                                            Icon(
-                                                imageVector = if (user.isActive) Icons.Default.Lock
-                                                else Icons.Default.Refresh,
-                                                contentDescription = "Estado",
-                                                tint = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    }
-
-                                    // Botón cambiar role — siempre visible
-                                    IconButton(onClick = { viewModel.onChangeUserRole(user) }) {
-                                        Icon(
-                                            imageVector = if (user.role == "ADMIN")
-                                                Icons.Default.AdminPanelSettings   // quitar admin → degradar a USER
-                                            else
-                                                Icons.Default.Person, // hacer admin
-                                            contentDescription = if (user.role == "ADMIN") "Quitar admin" else "Hacer admin",
-                                            tint = if (user.role == "ADMIN") Color.Gray
-                                            else MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-
-                                    // Botón eliminar
-                                    IconButton(onClick = { viewModel.onDeleteUserByAdmin(user.id) }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Eliminar",
-                                            tint = Color.Red
-                                        )
-                                    }
-                                }
-                            }
-
+                    items(viewModel.filteredDMList) { user ->
+                        UserContactItem(
+                            user = user,
+                            onClick = { onUserClick(user.id, user.username) }
                         )
-                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            thickness = 0.5.dp
+                        )
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+fun UserContactItem(
+    user: UserEntityDmDTO,
+    onClick: () -> Unit
+) {
+    ListItem(
+        modifier = Modifier.clickable { onClick() },
+        headlineContent = {
+            Text(
+                text = user.username,
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        leadingContent = {
+            // Icono estático de usuario
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        trailingContent = {
+            // El sobre para indicar que es para chatear
+            Icon(
+                imageVector = Icons.Default.Email,
+                contentDescription = "Enviar mensaje",
+                tint = MaterialTheme.colorScheme.secondary
+            )
+        }
+    )
 }

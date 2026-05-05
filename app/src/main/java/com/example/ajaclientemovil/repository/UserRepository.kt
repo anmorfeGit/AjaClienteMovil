@@ -3,7 +3,9 @@ package com.example.ajaclientemovil.repository
 import android.content.Context
 import com.example.ajaclientemovil.data.LoginDTO
 import com.example.ajaclientemovil.data.UserEntityDTO
+import com.example.ajaclientemovil.data.UserEntityDmDTO
 import com.example.ajaclientemovil.data.UserRegisterDTO
+import com.example.ajaclientemovil.data.network.AjaApiService
 import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
 
@@ -13,9 +15,12 @@ import com.example.ajaclientemovil.network.SessionManager
  * el servicio de red (NetworkManager) y el almacenamiento local (SessionManager).
  * @param context El contexto de la aplicación necesario para acceder a archivos.
  */
-class UserRepository(private val context: Context) {
+class UserRepository(
+    private val apiService: AjaApiService, // El primer argumento que pasas en AppNavigation
+    private val context: Context           // El segundo argumento
+){
 
-    private val apiService = NetworkManager.apiService
+
     /**
      * Gestiona el proceso de inicio de sesión.
      * * Pasos internos:
@@ -245,6 +250,26 @@ class UserRepository(private val context: Context) {
                 Result.success("Rol actualizado")
             } else {
                 Result.failure(Exception("Error servidor: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getUsersForDM(): Result<List<UserEntityDmDTO>> {
+        val token = SessionManager.getToken(context) ?: throw Exception("Sesión expirada")
+        val cookieHeader = "JWT_TOKEN=$token"
+        return try {
+            val response = apiService.getUsersForDM(cookieHeader)
+            if (response.isSuccessful && response.body() != null) {
+                val body = response.body()!!
+                if (body.success) {
+                    Result.success(body.message)
+                } else {
+                    Result.failure(Exception("Error en la respuesta del servidor"))
+                }
+            } else {
+                Result.failure(Exception("Error de red: ${response.code()}"))
             }
         } catch (e: Exception) {
             Result.failure(e)

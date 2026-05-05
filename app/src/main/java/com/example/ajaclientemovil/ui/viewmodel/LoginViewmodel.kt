@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
@@ -15,10 +17,12 @@ import kotlinx.coroutines.launch
  * * Utiliza el patrón de arquitectura MVVM.
  * * @param application Referencia al contexto de la aplicación necesaria para el repositorio.
  */
-class LoginViewModel(application: Application) : AndroidViewModel(application) {
+class LoginViewModel(
+    application: Application,
+    private val userRepository: UserRepository // El repositorio viene inyectado
+) : AndroidViewModel(application) {
 
     // Instancia del repositorio para gestionar los datos
-    private val userRepository = UserRepository(application)
 
     // --- ESTADOS DE LA UI ---
 
@@ -77,6 +81,18 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun resetError() {
         errorMessage = null
+    }
+}
+class LoginViewModelFactory(
+    private val application: Application,
+    private val userRepository: UserRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return LoginViewModel(application, userRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 

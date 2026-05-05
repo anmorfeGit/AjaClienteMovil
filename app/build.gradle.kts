@@ -43,6 +43,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.runtime)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.compose.foundation)
     testImplementation("io.mockk:mockk-android:1.13.8")
     testImplementation("io.mockk:mockk:1.10.2")
     testImplementation("junit:junit:4.13.2")

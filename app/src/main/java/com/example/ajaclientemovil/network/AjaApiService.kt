@@ -1,5 +1,9 @@
 package com.example.ajaclientemovil.data.network
 
+import com.example.ajaclientemovil.data.ApiResponseDM
+import com.example.ajaclientemovil.data.DMListResponse
+import com.example.ajaclientemovil.data.DMSingleResponse
+import com.example.ajaclientemovil.data.DirectMessageNewDTO
 import com.example.ajaclientemovil.data.ForumEntityDTO
 import com.example.ajaclientemovil.data.ForumListDTO
 import com.example.ajaclientemovil.data.GenericResponse
@@ -354,6 +358,66 @@ interface AjaApiService {
         @Header("Cookie") token: String,
         @Path("id") id: Long
     ): Response<Map<String, Any>>
+
+    /**
+     * Envía un mensaje o crea una conversación.
+     * PUT /api/dm
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @param newMessage Objeto [DirectMessageNewDTO] con los datos del nuevo mensaje.
+     * @return Una [Response] con el estado de la operación.
+     */
+    @PUT("/api/dm")
+    suspend fun sendDirectMessage(
+        @Header("Cookie") token: String,
+        @Body newMessage: DirectMessageNewDTO
+    ): Response<Map<String, Any>> // Usamos Map para manejar respuestas dinámicas del backend
+
+    /**
+     * Obtiene todas las conversaciones del usuario actual.
+     * GET /api/dm
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @return Una [Response] con el estado de la operación.
+     */
+    @GET("/api/dm")
+    suspend fun getAllConversations(
+        @Header("Cookie") token: String
+    ): Response<DMListResponse>
+
+    /**
+     * Obtiene los mensajes de una conversación específica.
+     * GET /api/dm/{otherUserId}
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @param otherUserId Identificador único del usuario con el que se está conversando.
+     * @return Una [Response] con el estado de la operación.
+     */
+    @GET("/api/dm/{otherUserId}")
+    suspend fun getConversationWithUser(
+        @Header("Cookie") token: String,
+        @Path("otherUserId") otherUserId: Long
+    ): Response<DMSingleResponse>
+
+    /**
+     * Elimina una conversación completa para ambos usuarios.
+     * DELETE /api/dm/{otherUserId}
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     * @param otherUserId Identificador único del usuario con el que se está conversando.
+     * @return Una [Response] con el estado de la operación.
+     */
+    @DELETE("/api/dm/{otherUserId}")
+    suspend fun deleteConversation(
+        @Header("Cookie") token: String,
+        @Path("otherUserId") otherUserId: Long
+    ): Response<Map<String, Any>>
+
+    /**
+     * Obtiene la lista de usuarios disponibles para una conversación.
+     * GET /api/user/dm
+     * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
+     */
+    @GET("api/user/dm") // Ajusta la ruta si falta el slash inicial
+    suspend fun getUsersForDM(
+        @Header("Cookie") token: String,
+    ): Response<ApiResponseDM>
 
 
 

@@ -3,6 +3,8 @@ package com.example.ajaclientemovil.ui.viewmodel
 import android.app.Application
 import androidx.compose.runtime.*
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
@@ -15,8 +17,10 @@ import kotlinx.coroutines.launch
  *
  * @param application Referencia al contexto de la aplicación para el acceso al repositorio.
  */
-class RegisterViewModel(application: Application) : AndroidViewModel(application) {
-    private val userRepository = UserRepository(application)
+class RegisterViewModel(
+    application: Application,
+    private val userRepository: UserRepository // Inyectado por constructor
+) : AndroidViewModel(application) {
 
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
@@ -56,5 +60,17 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
             }
             isLoading = false
         }
+    }
+}
+class RegisterViewModelFactory(
+    private val application: Application,
+    private val userRepository: UserRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(RegisterViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return RegisterViewModel(application, userRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

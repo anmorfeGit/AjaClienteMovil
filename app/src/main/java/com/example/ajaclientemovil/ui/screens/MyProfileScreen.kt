@@ -30,7 +30,7 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
  */
 @Composable
 fun MyProfileScreen(
-    viewModel: HomeViewModel = viewModel(),
+    viewModel: HomeViewModel,
     onLogout: () -> Unit
 ) {
     val scrollState = rememberScrollState()

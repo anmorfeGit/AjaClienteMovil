@@ -28,7 +28,7 @@ data class UserRegisterDTO(
  */
 data class LoginDTO(
     val success: Boolean,
-    val message: Any?
+    val message: UserEntityDTO?
 )
 // --- USUARIOS ---
 /**
@@ -205,4 +205,79 @@ data class PostListResponse(
 data class GenericResponse(
     val message: String,
     val success: Boolean
+)
+
+//---MENSAJES DIRECTOS---
+/** El mensaje individual dentro de la lista "messages"
+ * @param id Identificador único del mensaje.
+ * @param dateTime Fecha y hora del mensaje.
+ * @param fromId Identificador único del emisor del mensaje.
+ * @param fromName Nombre del emisor del mensaje.
+ * @param message Contenido del mensaje.
+ */
+data class MessageContentDTO(
+    val id: Long,
+    val dateTime: String,
+    val fromId: Long,
+    val fromName: String,
+    val message: String
+)
+
+/** La entidad que representa un chat completo
+ * @param id Identificador único del chat.
+ * @param participants Lista de usuarios participantes en el chat.
+ * @param messages Lista de mensajes del chat.
+ */
+data class DirectMessageChatEntity(
+    val id: Long,
+    val participants: List<UserEntityDTO>, // Reutilizamos tu UserEntityDTO
+    val messages: List<MessageContentDTO>
+)
+
+/** Para el GET /api/dm
+ * @param success Indica si la operación fue exitosa.
+ * @param message Lista de chats.
+ */
+data class DMListResponse(
+    val success: Boolean,
+    val message: List<DirectMessageChatEntity>
+)
+
+/** Para el GET /api/dm/{id} → message es una lista
+ * @param success Indica si la operación fue exitosa.
+ * @param message Lista de chats.
+ */
+data class DMSingleResponse(
+    val success: Boolean,
+    val message: DirectMessageChatEntity
+)
+/** Para el PUT
+ * @param idUserTo Identificador único del usuario al que se dirige el mensaje.
+ * @param text Contenido del mensaje.
+ */
+data class DirectMessageNewDTO(
+    val idUserTo: Long,
+    val text: String
+)
+
+/**
+ * DTO con la estructura del usuario para mapeo de usuarios normales en el chat, solo accede a
+ * el id y el nombre del usuario.
+ * @param id Identificador único del usuario.
+ * @param username Nombre de usuario.
+ */
+data class UserEntityDmDTO(
+    val id: Long,
+    val username: String
+)
+
+/**
+ * DTO con la estructura del usuario para mapeo de usuarios normales en el chat, solo accede a
+ * el id y el nombre del usuario.
+ * @param id Identificador único del usuario.
+ * @param username Nombre de usuario.
+ */
+data class ApiResponseDM(
+    val success: Boolean,
+    val message: List<UserEntityDmDTO>
 )

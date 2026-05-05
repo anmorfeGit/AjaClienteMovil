@@ -2,6 +2,7 @@ package com.example.ajaclientemovil.ui.viewmodel
 
 import android.app.Application
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -11,21 +12,27 @@ import com.example.ajaclientemovil.data.PostEntityDTO
 import com.example.ajaclientemovil.data.TopicEditDTO
 import com.example.ajaclientemovil.data.TopicEntityDTO
 import com.example.ajaclientemovil.data.UserEntityDTO
+import com.example.ajaclientemovil.data.UserEntityDmDTO
 import com.example.ajaclientemovil.network.SessionManager
+import com.example.ajaclientemovil.repository.DirectMessageRepository
 import com.example.ajaclientemovil.repository.ForumRepository
 import com.example.ajaclientemovil.repository.PostRepository
 import com.example.ajaclientemovil.repository.UserRepository
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel encargado de gestionar la lógica de negocio de la pantalla principal y la administración.
- * * Sigue el patrón arquitectónico MVVM, actuando como puente entre el UserRepository
- * y las pantallas de la interfaz de usuario (Compose).
- * * @param application Referencia al contexto de la aplicación para acceso a recursos y sesión.
+ * ViewModel para la pantalla Home.
+ * @param application Contexto de la aplicación.
+ * @param userRepository Repositorio para operaciones relacionadas con usuarios.
+ * @param forumRepository Repositorio para operaciones relacionadas con foros.
+ * @param postRepository Repositorio para operaciones relacionadas con posts.
+ * @param topicRepository Repositorio para operaciones relacionadas con temas.
  */
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+class HomeViewModel(
+    application: Application,
+    private val userRepository: UserRepository,
+) : AndroidViewModel(application) {
 
-    private val userRepository = UserRepository(application)
 
     // Datos del usuario actual para la UI
     var username by mutableStateOf(SessionManager.getUsername(application))
@@ -41,7 +48,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var userId by mutableStateOf(SessionManager.getUser(application)?.id ?: -1L)
     // En HomeViewModel.kt
 
-    var searchQuery by mutableStateOf("")
+
 
     // Esta lista se calcula automáticamente cada vez que cambia 'searchQuery' o 'userList'
     val filteredUserList: List<UserEntityDTO>
@@ -59,6 +66,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     var forumList by mutableStateOf<List<ForumEntityDTO>>(emptyList())
     private val postRepository = PostRepository(getApplication())
     var postList by mutableStateOf<List<PostEntityDTO>>(emptyList())
+    // Controla si el diálogo de mensaje rápido está visible
+    var showChatDialog by mutableStateOf(false)
+
+    // Almacena el usuario al que le vamos a escribir (se setea al pulsar el sobre)
+    var selectedUserForDM by mutableStateOf<UserEntityDTO?>(null)
+
+    // El texto del mensaje que se está escribiendo en el diálogo
+    var dmText by mutableStateOf("")
+
+    // Lista que viene del servidor
+    private var dmUserList = mutableStateListOf<UserEntityDmDTO>()
+
+    // Lista que se muestra en pantalla (filtrada)
+    var filteredDMList = mutableStateListOf<UserEntityDmDTO>()
+        private set
+
+    var searchQuery by mutableStateOf("")
 
 // ---USUARIOS---
     /**
@@ -70,8 +94,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             isLoading = true
             userRepository.getAllUsers()
-                .onSuccess { list -> userList = list }
-                .onFailure { e -> errorMessage = e.message }
+                .onSuccess {
+                    list ->
+                    android.util.Log.d("USER_DEBUG", "Usuarios cargados: ${list.size}")
+                    userList = list }
+                .onFailure { e ->
+                    android.util.Log.e("USER_DEBUG", "Error: ${e.message}")
+                    errorMessage = e.message }
             isLoading = false
         }
     }
@@ -200,6 +229,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /**
+     * Cambia el role de un usuario (ADMIN - USER).
+     *
+     * Si el role actual del usuario es "USER" lo promociona a ADMIN,
+     * y si ya es "ADMIN" lo degrada a USER.
+     * Tras el cambio exitoso recarga la lista de usuarios para reflejar
+     * el nuevo estado en la interfaz.
+     *
+     * @param user Usuario cuyo role se desea cambiar.
+     */
+
+    fun onChangeUserRole(user: UserEntityDTO) {
+        val toAdmin = user.role != "ADMIN"
+        viewModelScope.launch {
+            userRepository.updateUserRole(user.id, toAdmin)
+                .onSuccess {
+                    fetchUsers()
+                }
+                .onFailure { error ->
+                    errorMessage = error.message
+                }
+        }
+    }
+
 // ---FORUMS---
     /**
      * Obtiene la lista de foros disponibles.
@@ -208,11 +261,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun fetchForums() {
         viewModelScope.launch {
+            android.util.Log.d("FORUM_DEBUG", "fetchForums() llamado")
             forumRepository.getForums()
                 .onSuccess { list ->
+                    android.util.Log.d("FORUM_DEBUG", "Foros cargados: ${list.size}")
                     forumList = list.sortedBy { it.creationDate ?: "" }
                 }
                 .onFailure { e ->
+                    android.util.Log.e("FORUM_DEBUG", "Error foros: ${e.message}")
                     errorMessage = "Error al cargar foros: ${e.message}"
                 }
         }
@@ -401,6 +457,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Ejecuta la petición de forma asíncrona mediante viewModelScope para no bloquear
      * el hilo principal de la interfaz.
      */
+
+    // ---POSTS---
     fun onSendPost(text: String, topicId: Long) {
         viewModelScope.launch {
             postRepository.createPost(text, topicId)
@@ -489,28 +547,36 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-
-    /**
-     * Cambia el role de un usuario (ADMIN - USER).
-     *
-     * Si el role actual del usuario es "USER" lo promociona a ADMIN,
-     * y si ya es "ADMIN" lo degrada a USER.
-     * Tras el cambio exitoso recarga la lista de usuarios para reflejar
-     * el nuevo estado en la interfaz.
-     *
-     * @param user Usuario cuyo role se desea cambiar.
-     */
-
-    fun onChangeUserRole(user: UserEntityDTO) {
-        val toAdmin = user.role != "ADMIN"
+    fun fetchUsersForDM() {
         viewModelScope.launch {
-            userRepository.updateUserRole(user.id, toAdmin)
-                .onSuccess {
-                    fetchUsers()
+            isLoading = true
+            userRepository.getUsersForDM()
+                .onSuccess { users ->
+                    // Usamos una actualización limpia
+                    dmUserList.clear()
+                    dmUserList.addAll(users)
+
+                    // IMPORTANTE: Asegúrate de que applyDMFilter()
+                    // se ejecute DESPUÉS de que dmUserList tenga datos
+                    applyDMFilter()
+
+                    android.util.Log.d("DM_DEBUG", "Lista cargada: ${dmUserList.size} usuarios")
                 }
-                .onFailure { error ->
-                    errorMessage = error.message
+                .onFailure { e ->
+                    errorMessage = e.message
+                    android.util.Log.e("DM_DEBUG", "Error: ${e.message}")
                 }
+            isLoading = false
         }
+    }
+    fun applyDMFilter() {
+        val query = searchQuery.trim().lowercase()
+        val filtered = if (query.isEmpty()) {
+            dmUserList
+        } else {
+            dmUserList.filter { it.username.lowercase().contains(query) }
+        }
+        filteredDMList.clear()
+        filteredDMList.addAll(filtered)
     }
 }
