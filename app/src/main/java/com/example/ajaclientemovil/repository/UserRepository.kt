@@ -54,13 +54,7 @@ class UserRepository(
      * bloquee el hilo principal de la interfaz de usuario (UI Thread).
      */
     suspend fun performLogout() {
-        // 1. Intentamos invalidar en el servidor (POST /api/auth/logout)
-        // Es vital informar al servidor para que la cookie deje de ser válida.
         NetworkManager.logout()
-
-        // 2. Limpiamos localmente pase lo que pase
-        // Aunque la red falle, debemos asegurar que el usuario no pueda
-        // seguir navegando por la app localmente.
         SessionManager.clearSession(context)
     }
 
@@ -126,7 +120,6 @@ class UserRepository(
             if (response.isSuccessful) {
                 Result.success("Usuari registrat correctament")
             } else {
-                // Extraemos el mensaje de error del servidor si existe
                 val errorMsg = response.errorBody()?.string() ?: "Error en el registre"
                 Result.failure(Exception(errorMsg))
             }
@@ -147,20 +140,16 @@ class UserRepository(
             val token = SessionManager.getToken(context) ?: throw Exception("Sesión no válida")
             val currentUser = SessionManager.getUser(context) ?: throw Exception("Usuario no encontrado")
 
-            // Construimos el objeto exacto que Alex espera
             val userToSend = currentUser.copy(
-                username = newUsername,    // Ahora sí permitimos cambiar el nombre
-                email = newEmail,          // Y el email
-                password = currentPassword, // Enviamos la actual para verificar
-                registerDate = currentUser.registerDate // Mantenemos la original
+                username = newUsername,
+                email = newEmail,
+                password = currentPassword,
+                registerDate = currentUser.registerDate
             )
 
-            // Llamada al endpoint /api/user
             val response = apiService.updateUser("JWT_TOKEN=$token", userToSend)
 
             if (response.isSuccessful) {
-                // Si el servidor responde OK, actualizamos nuestra copia local
-                // (Sin guardar la contraseña en el SharedPreferences por seguridad)
                 val updatedUser = userToSend.copy(password = null)
                 SessionManager.saveSession(context, token, updatedUser)
                 Result.success(updatedUser)
@@ -181,11 +170,9 @@ class UserRepository(
         return try {
             val token = SessionManager.getToken(context) ?: throw Exception("Sesión no válida")
 
-            // Pasamos los DOS parámetros: el token para autorizar y el ID para identificar
             val response = apiService.deleteUser("JWT_TOKEN=$token", userId)
 
             if (response.isSuccessful) {
-                // Verificamos si el usuario borrado es el actual para cerrar sesión
                 val currentUser = SessionManager.getUser(context)
                 if (currentUser?.id == userId) {
                     SessionManager.clearSession(context)

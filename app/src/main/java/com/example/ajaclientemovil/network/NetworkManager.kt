@@ -111,12 +111,9 @@ object NetworkManager {
 
                     Triple(userDto, null, token)
                 } else {
-                    // ERROR CONTROLADO (Usuario no existe, etc.)
-                    // Según el estándar del servidor, si success es false, message es String.
                     Triple(null, body.message.toString(), null)
                 }
             } else {
-                // ERROR HTTP (401, 500...)
                 val errorMsg = response.errorBody()?.string()?.let {
                     JSONObject(it).optString("message", "Error de autenticación")
                 } ?: "Error en el servidor"
@@ -137,18 +134,14 @@ object NetworkManager {
 
     suspend fun logout(): Boolean {
         return try {
-            // Ejecución de la llamada POST /api/auth/logout definida en AjaApiService
             val response = apiService.logout()
 
             if (response.isSuccessful) {
-                // Se verifica que el diccionario de respuesta contenga success: true
                 response.body()?.get("success") == true
             } else {
-                // Manejo de errores de protocolo (ej: 401 Unauthorized o 500 Server Error)
                 false
             }
         } catch (e: Exception) {
-            // Captura de excepciones críticas (pérdida de conexión, timeout, etc.)
             false
         }
     }

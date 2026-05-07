@@ -25,7 +25,6 @@ class PostRepository(private val context: Context) {
             val response = apiService.getAllPosts("JWT_TOKEN=$token")
 
             if (response.isSuccessful && response.body() != null) {
-                // Filtramos por el ID del Topic y ordenamos por número de mensaje
                 val filtered = response.body()!!.message
                     .filter { it.topic?.id == topicId }
                     .sortedBy { it.messageNumber }

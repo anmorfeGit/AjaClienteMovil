@@ -1,7 +1,5 @@
 package com.example.ajaclientemovil.data
 
-import java.time.LocalDate
-
 /**
  * DTO específico para el proceso de alta de nuevos usuarios.
  *
@@ -280,4 +278,18 @@ data class UserEntityDmDTO(
 data class ApiResponseDM(
     val success: Boolean,
     val message: List<UserEntityDmDTO>
+)
+
+/**
+ * DTO para la notificación de un nuevo mensaje.
+ * @param userId Identificador único del usuario.
+ * @param username Nombre de usuario.
+ * @param topicId Identificador único del tema.
+ * @param topicTitle Título del tema.
+ */
+data class NotifyStatusDTO(
+    val userId: Long,
+    val username: String,
+    val topicId: Long,
+    val topicTitle: String?
 )

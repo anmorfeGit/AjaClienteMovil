@@ -19,6 +19,12 @@ class DirectMessageRepository(
         return if (token != null) "JWT_TOKEN=$token" else null
     }
 
+    /**
+     * Envía un mensaje directo a otro usuario.
+     * @param idUserTo ID del usuario al que se dirige el mensaje.
+     * @param text Texto del mensaje.
+     * @return Un Result con el mensaje de éxito o error.
+     */
     suspend fun sendMessage(idUserTo: Long, text: String): Result<String> {
         return try {
             val cookie = getAuthCookie() ?: return Result.failure(Exception("Sesión expirada"))
@@ -26,7 +32,6 @@ class DirectMessageRepository(
             val response = apiService.sendDirectMessage(cookie, dto)
 
             if (response.isSuccessful) {
-                // El backend devuelve un Map, extraemos el campo "message"
                 val msg = response.body()?.get("message")?.toString() ?: "Enviado"
                 Result.success(msg)
             } else {
@@ -37,6 +42,10 @@ class DirectMessageRepository(
         }
     }
 
+    /**
+     * Obtiene la lista de conversaciones.
+     * @return Un Result con la lista de conversaciones o error.
+     */
     suspend fun fetchAllConversations(): Result<List<DirectMessageChatEntity>> {
         return try {
             val cookie = getAuthCookie() ?: return Result.failure(Exception("Sin sesión"))
@@ -52,12 +61,15 @@ class DirectMessageRepository(
         }
     }
 
+    /**
+     * Obtiene el chat con un usuario específico.
+     * @param otherUserId ID del usuario con el que se obtendrá el chat.
+     * @return Un Result con el chat o error.
+     */
     suspend fun fetchChatWithUser(otherUserId: Long): Result<DirectMessageChatEntity> {
         return try {
-            // 1. Obtenemos la cookie de sesión
             val cookie = getAuthCookie() ?: return Result.failure(Exception("Sesión expirada"))
 
-            // 2. Llamada a la API usando el nuevo DTO DMSingleResponse
             val response = apiService.getConversationWithUser(cookie, otherUserId)
 
             if (response.isSuccessful) {
@@ -68,15 +80,18 @@ class DirectMessageRepository(
                     Result.failure(Exception("Error del servidor: ${body?.success ?: "Sin respuesta"}"))
                 }
             } else {
-                // Manejo de errores según el código HTTP (404, 500, etc.)
                 Result.failure(Exception("Error al obtener el chat: ${response.code()}"))
             }
         } catch (e: Exception) {
-            // Captura errores de red (sin internet, timeout, etc.)
             Result.failure(e)
         }
     }
 
+    /**
+     * Elimina una conversación.
+     * @param otherUserId ID del usuario con el que se eliminará la conversación.
+     * @return Un Result con el mensaje de éxito o error.
+     */
     suspend fun deleteConversation(otherUserId: Long): Result<String> {
         return try {
             val cookie = getAuthCookie() ?: return Result.failure(Exception("Sin sesión"))

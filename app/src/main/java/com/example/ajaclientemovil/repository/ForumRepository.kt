@@ -74,7 +74,6 @@ class ForumRepository(private val context: Context) {
             val response = apiService.getAllTopics("JWT_TOKEN=$token")
 
             if (response.isSuccessful && response.body() != null) {
-                // Filtramos los temas que pertenecen a este foro concreto
                 val filteredTopics = response.body()!!.message.filter { it.forum.id == forumId }
                 Result.success(filteredTopics)
             } else {

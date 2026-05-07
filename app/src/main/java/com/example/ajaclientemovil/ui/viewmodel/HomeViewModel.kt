@@ -534,7 +534,6 @@ class HomeViewModel(
 
         viewModelScope.launch {
             isLoading = true
-            // Si aquí da error, asegúrate de que tu DTO permita user = null
             val postDto = PostEntityDTO(id = postId, text = newText)
 
             postRepository.updatePost(postDto)

@@ -31,7 +31,6 @@ fun ForumTopicsScreen(
     viewModel: HomeViewModel = viewModel(),
     onTopicClick: (Long) -> Unit
 ) {
-    // Estado local para la lista de temas y diálogos
     val topics = remember { mutableStateListOf<TopicEntityDTO>() }
     var showCreateDialog by remember { mutableStateOf(false) }
     var newTopicTitle by remember { mutableStateOf("") }
@@ -55,7 +54,6 @@ fun ForumTopicsScreen(
         }
     }
 
-    // Carga inicial al entrar o cambiar de foro
     LaunchedEffect(forumId) {
         refreshData()
     }

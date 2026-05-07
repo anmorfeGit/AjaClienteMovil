@@ -105,6 +105,14 @@ fun HomeScreen(
     }
 }
 
+/**
+ * Componente individual para cada fila de foro.
+ * @param forum Foro a mostrar.
+ * @param isAdmin Indica si el usuario actual es administrador.
+ * @param onClick Callback que se ejecuta al hacer clic en el foro.
+ * @param onEdit Callback que se ejecuta al hacer clic en el botón de edición.
+ * @param onDelete Callback que se ejecuta al hacer clic en el botón de eliminación.
+ */
 @Composable
 fun ForumItemCard(
     forum: ForumEntityDTO,

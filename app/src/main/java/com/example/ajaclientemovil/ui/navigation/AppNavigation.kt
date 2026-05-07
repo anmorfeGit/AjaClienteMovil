@@ -33,6 +33,9 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 import com.example.ajaclientemovil.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.launch
 import com.example.ajaclientemovil.ui.viewmodel.LoginViewModelFactory
+import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModel
+import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModelFactory
+import com.example.ajaclientemovil.ui.viewmodel.WebSocketViewModel
 
 /**
  * Estructura base de navegación de la aplicación.
@@ -48,16 +51,13 @@ fun AppNavigation(context: Context) {
     val application = context.applicationContext as android.app.Application
     val apiService = NetworkManager.apiService
 
-    // 1. Instanciamos los repositorios necesarios para HomeViewModel
     val userRepo = remember { com.example.ajaclientemovil.repository.UserRepository(apiService, context) }
     val dmRepo = remember { DirectMessageRepository(apiService, context) }
 
-    // 2. Usamos la Factory para crear el HomeViewModel
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModelFactory(application, userRepo)
     )
 
-    // 3. Usamos la Factory para el ChatViewModel
     val chatViewModel: ChatViewModel = viewModel(
         factory = ChatViewModelFactory(dmRepo)
     )
@@ -71,12 +71,13 @@ fun AppNavigation(context: Context) {
     var showForumDialog by remember { mutableStateOf(false) }
     var forumToEdit by remember { mutableStateOf<ForumEntityDTO?>(null) }
     var forumTitleText by remember { mutableStateOf("") }
+    val wsViewModel: WebSocketViewModel = viewModel()
 
 
-    // Dispara la carga de foros si el usuario ya está logueado al abrir la app
     LaunchedEffect(Unit) {
         if (SessionManager.isUserLoggedIn(context)) {
             homeViewModel.fetchForums()
+            wsViewModel.startListening()
         }
     }
 
@@ -119,6 +120,7 @@ fun AppNavigation(context: Context) {
                             currentRoute == Screen.AdminList.route -> "GESTIÓN DE USUARIOS"
                             currentRoute == Screen.MyProfile.route -> "MIS DATOS"
                             currentRoute == Screen.DirectMessages.route -> "MIS MENSAJES"
+                            currentRoute == Screen.StatusServer.route -> "ESTADO DEL SERVIDOR"
                             currentRoute?.startsWith("chat_detail") == true -> "CHAT"
                             else -> "AJA"
                         },
@@ -201,21 +203,19 @@ fun AppNavigation(context: Context) {
                     startDestination = startDestination
                 ) {
                     composable(Screen.Login.route) {
-                        // 1. Instanciamos la Factory
                         val loginFactory = LoginViewModelFactory(
                             application = context.applicationContext as Application,
-                            userRepository = userRepo // Este es el repo que creaste al inicio de AppNavigation
+                            userRepository = userRepo
                         )
 
-                        // 2. Creamos el ViewModel usando la Factory
                         val loginViewModel: LoginViewModel = viewModel(factory = loginFactory)
 
-                        // 3. Se lo pasamos a la pantalla
                         LoginScreen(
                             viewModel = loginViewModel,
                             onLoginSuccess = {
                                 homeViewModel.refreshSessionData()
                                 homeViewModel.fetchForums()
+                                wsViewModel.startListening()
                                 navController.navigate(Screen.Home.route) {
                                     popUpTo(Screen.Login.route) { inclusive = true }
                                 }
@@ -226,7 +226,18 @@ fun AppNavigation(context: Context) {
                         )
                     }
                     composable(Screen.Register.route) {
-                        RegisterScreen(onBackToLogin = { navController.popBackStack() })
+                        val registerFactory = RegisterViewModelFactory(
+                            application = application,
+                            userRepository = userRepo
+                        )
+
+
+                        val registerViewModel: RegisterViewModel = viewModel(factory = registerFactory)
+
+                        RegisterScreen(
+                            viewModel = registerViewModel,
+                            onBackToLogin = { navController.popBackStack() }
+                        )
                     }
                     composable(Screen.Home.route) {
                         HomeScreen(
@@ -291,10 +302,17 @@ fun AppNavigation(context: Context) {
                     }
                     composable(
                         route = Screen.TopicDetail.route,
-                        arguments = listOf(navArgument("topicId") { type = NavType.LongType })
+                        arguments = listOf(
+                            navArgument("topicId") { type = NavType.LongType },
+                            navArgument("title") { type = NavType.StringType; nullable = true }
+                        )
                     ) { backStackEntry ->
                         val topicId = backStackEntry.arguments?.getLong("topicId") ?: -1L
-                        TopicDetailScreen(topicId = topicId, viewModel = homeViewModel)
+                        TopicDetailScreen(
+                            topicId = topicId,
+                            viewModel = homeViewModel,
+                            wsViewModel = wsViewModel
+                        )
                     }
                     composable(Screen.DirectMessages.route) {
                         DirectMessageScreen(
@@ -321,6 +339,9 @@ fun AppNavigation(context: Context) {
                             viewModel = chatViewModel,
                             onBack = { navController.popBackStack() }
                         )
+                    }
+                    composable(Screen.StatusServer.route) {
+                        StatusServerScreen(viewModel = wsViewModel)
                     }
                 }
 
@@ -362,7 +383,13 @@ fun AppDrawerSheet(
             onClick = { onNavigate(Screen.Home.route) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
-
+        NavigationDrawerItem(
+            label = { Text("Estado del Servidor") },
+            selected = false,
+            icon = { Icon(Icons.Default.Dvr, null) }, // Icono de monitor/servidor
+            onClick = { onNavigate(Screen.StatusServer.route) },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
         NavigationDrawerItem(
             label = { Text("Mis Mensajes") },
             selected = false,
@@ -476,6 +503,16 @@ fun LoadingOverlay(message: String) {
     }
 }
 
+/**
+ * Factory para crear instancias de [ChatViewModel].
+ * @param repository Repositorio de DirectMessage.
+ * @return Factory personalizado.
+ */
+/**
+ * Factory para crear instancias de [ChatViewModel].
+ * @param repository Repositorio de DirectMessage.
+ * @return Factory personalizado.
+ */
 class ChatViewModelFactory(private val repository: DirectMessageRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ChatViewModel::class.java)) {
@@ -485,6 +522,13 @@ class ChatViewModelFactory(private val repository: DirectMessageRepository) : Vi
         throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
+
+/**
+ * Factory para crear instancias de [HomeViewModel].
+ * @param application Aplicación.
+ * @param userRepository Repositorio de usuarios.
+ * @return Factory personalizado.
+ */
 class HomeViewModelFactory(
     private val application: android.app.Application,
     private val userRepository: com.example.ajaclientemovil.repository.UserRepository,

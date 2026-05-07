@@ -32,12 +32,17 @@ import androidx.compose.ui.unit.dp
 import com.example.ajaclientemovil.data.UserEntityDmDTO
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 
+/**
+ * Interfaz de usuario para la lista de usuarios.
+ * Se comunica con [HomeViewModel] para gestionar los eventos y estados.
+ * @param viewModel Modelo de vista asociado a esta pantalla.
+ * @param onUserClick Callback para manejar el clic en un usuario.
+ */
 @Composable
 fun UserListScreen(
     viewModel: HomeViewModel,
     onUserClick: (Long, String) -> Unit
 ) {
-    // Carga de la lista de DMs al iniciar
     LaunchedEffect(Unit) {
         viewModel.fetchUsersForDM()
     }
@@ -102,6 +107,11 @@ fun UserListScreen(
     }
 }
 
+/**
+ * Elemento de la lista de usuarios.
+ * @param user Usuario a mostrar.
+ * @param onClick Callback para manejar el clic en el usuario.
+ */
 @Composable
 fun UserContactItem(
     user: UserEntityDmDTO,

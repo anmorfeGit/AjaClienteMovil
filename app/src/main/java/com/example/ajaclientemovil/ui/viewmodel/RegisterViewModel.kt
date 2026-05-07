@@ -62,6 +62,13 @@ class RegisterViewModel(
         }
     }
 }
+
+/**
+ * Factory para crear instancias de RegisterViewModel.
+ * @param application Referencia al contexto de la aplicación necesaria para el repositorio.
+ * @param userRepository Repositorio para operaciones relacionadas con usuarios.
+ * @return Factory personalizado para RegisterViewModel.
+ */
 class RegisterViewModelFactory(
     private val application: Application,
     private val userRepository: UserRepository

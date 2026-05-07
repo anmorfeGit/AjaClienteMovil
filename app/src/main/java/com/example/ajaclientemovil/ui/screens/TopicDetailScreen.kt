@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Send
@@ -24,11 +23,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,11 +36,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ajaclientemovil.data.NotifyStatusDTO
 import com.example.ajaclientemovil.data.PostEntityDTO
+import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
+import com.example.ajaclientemovil.ui.viewmodel.WebSocketViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 /**
  * Interfaz de usuario para ver los detalles de un tema específico.
@@ -51,15 +56,30 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
  * @receiver [HomeViewModel] asociado a esta pantalla.
  */
 @Composable
-fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
+fun TopicDetailScreen(
+    topicId: Long,
+    topicTitle: String?= null,
+    viewModel: HomeViewModel = viewModel(),
+    wsViewModel: WebSocketViewModel? = null
+) {
     var replyText by remember { mutableStateOf("") }
-
-    // Estados para el diálogo de edición
     var showEditDialog by remember { mutableStateOf(false) }
     var postToEdit by remember { mutableStateOf<PostEntityDTO?>(null) }
     var editPostText by remember { mutableStateOf("") }
-    // Estado para el desplazamiento de la lista
     val listState = rememberLazyListState()
+
+
+
+    val fixedTitleForThisSession = remember {
+        topicTitle
+            ?: viewModel.postList.firstOrNull()?.topic?.title
+            ?: "Tema #$topicId"
+    }
+
+    var isCurrentlyTyping by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val currentTopicId = topicId
+    val titleSnapshot = remember { fixedTitleForThisSession }
 
     LaunchedEffect(viewModel.postList.size) {
         if (viewModel.postList.isNotEmpty()) {
@@ -69,6 +89,14 @@ fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
 
     LaunchedEffect(topicId) {
         viewModel.fetchPostsByTopic(topicId)
+    }
+
+    DisposableEffect(topicId) {
+        wsViewModel?.notifyActivity(topicId, titleSnapshot, true)
+
+        onDispose {
+            wsViewModel?.clearActivity(topicId, titleSnapshot)
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -133,13 +161,28 @@ fun TopicDetailScreen(topicId: Long, viewModel: HomeViewModel = viewModel()) {
             Row(modifier = Modifier.padding(8.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = replyText,
-                    onValueChange = { replyText = it },
+                    onValueChange = { nuevoValor ->
+                        if (replyText.isEmpty() && nuevoValor.isNotEmpty()) {
+                            isCurrentlyTyping = true // Marcamos que está escribiendo
+                            wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, true)
+                        } else if (replyText.isNotEmpty() && nuevoValor.isEmpty()) {
+                            isCurrentlyTyping = false // Marcamos que dejó de escribir
+                            wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, false)
+                        }
+                        replyText = nuevoValor
+                    },
                     placeholder = { Text("Escribe una respuesta...") },
                     modifier = Modifier.weight(1f),
                     maxLines = 3
                 )
+
                 IconButton(onClick = {
                     if (replyText.isNotBlank()) {
+                        // 4. LIMPIAR ESTADO AL ENVIAR:
+                        // Como reseteamos el texto manualmente, debemos notificar el fin.
+                        isCurrentlyTyping = false
+                        wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, false)
+
                         viewModel.onSendPost(replyText, topicId)
                         replyText = ""
                     }

@@ -74,5 +74,11 @@ sealed class Screen(val route: String) {
     object ChatDetail : Screen("chat_detail/{userId}/{username}") {
         fun createRoute(userId: Long, username: String) = "chat_detail/$userId/$username"
     }
+
+    /**
+     * Objeto que representa la pantalla de notificaciones del servidor.
+     * @property route Ruta asociada a esta pantalla.
+     */
+    object StatusServer : Screen("status_server")
 }
 

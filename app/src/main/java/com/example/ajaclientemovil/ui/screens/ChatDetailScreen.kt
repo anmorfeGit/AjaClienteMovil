@@ -48,6 +48,13 @@ import com.example.ajaclientemovil.data.MessageContentDTO
 import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.ui.viewmodel.ChatViewModel
 
+/**
+ * Pantalla de chat con un usuario específico.
+ * @param otherUserId Identificador del usuario con el que se está hablando.
+ * @param otherUserName Nombre del usuario con el que se está hablando.
+ * @param viewModel Modelo de vista asociado a esta pantalla.
+ * @param onBack Callback al hacer clic en el botón de retroceso.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
@@ -60,10 +67,8 @@ fun ChatDetailScreen(
     val myId = SessionManager.getUser(context)?.id ?: -1L
     var textState by remember { mutableStateOf("") }
 
-    // El scroll automático para que al abrir el chat o recibir mensajes baje solo
     val listState = rememberLazyListState()
 
-    // Cargamos los mensajes al entrar
     LaunchedEffect(otherUserId) {
         viewModel.clearError()
         viewModel.fetchChatWithUser(otherUserId)
@@ -175,9 +180,13 @@ fun ChatDetailScreen(
     }
 }
 
+/**
+ * Componente de burbuja de chat.
+ * @param message Mensaje a mostrar.
+ * @param isMine Indica si el mensaje es del usuario actual.
+ */
 @Composable
 fun ChatBubble(message: MessageContentDTO, isMine: Boolean) {
-    // Definimos la alineación y el color según quién envía
     val arrangement = if (isMine) Alignment.End else Alignment.Start
     val bubbleColor = if (isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     val textColor = if (isMine) Color.White else MaterialTheme.colorScheme.onSurfaceVariant

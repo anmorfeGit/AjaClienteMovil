@@ -20,6 +20,12 @@ import com.example.ajaclientemovil.network.SessionManager
 import androidx.compose.ui.platform.LocalContext
 import com.example.ajaclientemovil.ui.viewmodel.ChatViewModel
 
+/**
+ * Pantalla de mensajes directos.
+ * @param viewModel Modelo de vista asociado a esta pantalla.
+ * @param isAdmin Indica si el usuario actual es administrador.
+ * @param onConversationClick Callback para navegar al chat con el usuario seleccionado (id, username).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DirectMessageScreen(
@@ -28,7 +34,6 @@ fun DirectMessageScreen(
     onConversationClick: (Long, String) -> Unit
 ) {
     val context = LocalContext.current
-    // Obtenemos el ID de forma segura, si es nulo usamos un valor imposible (-1)
     val currentUserId = SessionManager.getUser(context)?.id ?: -1L
 
     LaunchedEffect(Unit) {
@@ -79,7 +84,6 @@ fun DirectMessageScreen(
                 }
             }
 
-            // Error flotante al final
             viewModel.errorMessage?.let { error ->
                 Snackbar(
                     modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
@@ -91,6 +95,14 @@ fun DirectMessageScreen(
     }
 }
 
+/**
+ * Componente de elemento de conversación en la pantalla de mensajes directos.
+ * @param chat Chat a mostrar.
+ * @param currentUserId Identificador del usuario actual.
+ * @param isAdmin Indica si el usuario actual es administrador.
+ * @param onClick Callback para navegar al chat con el usuario seleccionado (id, username).
+ * @param onDelete Callback para eliminar un chat.
+ */
 @Composable
 fun ConversationItem(
     chat: DirectMessageChatEntity,
@@ -99,12 +111,10 @@ fun ConversationItem(
     onClick: (Long, String) -> Unit,
     onDelete: (Long) -> Unit
 ) {
-    // 1. Identificar al interlocutor (el que no soy yo)
     val otherUser = chat.participants.find { it.id != currentUserId }
     val otherUserName = otherUser?.username ?: "Usuario"
     val otherUserId = otherUser?.id ?: -1L
 
-    // 2. Último mensaje
     val lastMessage = chat.messages.lastOrNull()
 
     ListItem(

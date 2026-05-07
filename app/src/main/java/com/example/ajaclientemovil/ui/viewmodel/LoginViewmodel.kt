@@ -19,18 +19,13 @@ import kotlinx.coroutines.launch
  */
 class LoginViewModel(
     application: Application,
-    private val userRepository: UserRepository // El repositorio viene inyectado
+    private val userRepository: UserRepository
 ) : AndroidViewModel(application) {
 
-    // Instancia del repositorio para gestionar los datos
 
-    // --- ESTADOS DE LA UI ---
-
-    /** Indica si hay una petición al servidor de Alex en curso. Útil para mostrar un ProgressIndicator. */
     var isLoading by mutableStateOf(false)
         private set // Solo el ViewModel puede cambiar este valor
 
-    /** Almacena el mensaje de error si el login falla. Si es null, no hay error. */
     var errorMessage by mutableStateOf<String?>(null)
         private set
 
@@ -83,6 +78,13 @@ class LoginViewModel(
         errorMessage = null
     }
 }
+
+/**
+ * Factory para crear instancias de LoginViewModel.
+ * @param application Referencia al contexto de la aplicación necesaria para el repositorio.
+ * @param userRepository Repositorio para operaciones relacionadas con usuarios.
+ * @return Factory personalizado para LoginViewModel.
+ */
 class LoginViewModelFactory(
     private val application: Application,
     private val userRepository: UserRepository
