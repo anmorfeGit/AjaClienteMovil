@@ -61,7 +61,7 @@ class WebSocketManager(private val context: Context) {
             url,
             mapOf("Cookie" to "JWT_TOKEN=$token")
         )
-        mStompClient?.withServerHeartbeat(10000)?.withClientHeartbeat(10000)
+        //mStompClient?.withServerHeartbeat(20000)?.withClientHeartbeat(20000)
 
         mStompClient!!.lifecycle().subscribe { lifecycleEvent ->
             when (lifecycleEvent.type) {
