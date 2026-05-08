@@ -49,7 +49,7 @@ class DirectMessageRepository(
     suspend fun fetchAllConversations(): Result<List<DirectMessageChatEntity>> {
         return try {
             val cookie = getAuthCookie() ?: return Result.failure(Exception("Sin sesión"))
-            val response = apiService.getAllConversations(cookie) // Usa DMListResponse
+            val response = apiService.getAllConversations(cookie)
 
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()?.message ?: emptyList())

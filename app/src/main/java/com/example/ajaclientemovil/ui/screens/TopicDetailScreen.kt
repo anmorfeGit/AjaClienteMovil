@@ -12,9 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -36,22 +36,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ajaclientemovil.data.NotifyStatusDTO
 import com.example.ajaclientemovil.data.PostEntityDTO
-import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 import com.example.ajaclientemovil.ui.viewmodel.WebSocketViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 /**
  * Interfaz de usuario para ver los detalles de un tema específico.
  * Se comunica con [HomeViewModel] para gestionar los eventos y estados.
  * @param topicId Identificador del tema para el que se mostrarán los detalles.
+ * @param topicTitle Título del tema.
  * @param viewModel Modelo de vista asociado a los detalles del tema.
  * @receiver [HomeViewModel] asociado a esta pantalla.
  */
@@ -76,9 +72,7 @@ fun TopicDetailScreen(
             ?: "Tema #$topicId"
     }
 
-    var isCurrentlyTyping by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    val currentTopicId = topicId
+
     val titleSnapshot = remember { fixedTitleForThisSession }
 
     LaunchedEffect(viewModel.postList.size) {
@@ -108,11 +102,10 @@ fun TopicDetailScreen(
             items(viewModel.postList) { post ->
                 // Permisos calculados por post
                 val canEdit = viewModel.canEditPost(post.user!!.id)
-                val canDelete = viewModel.canDeletePost(post.user!!.id)
+                val canDelete = viewModel.canDeletePost(post.user.id)
 
                 Card(
                     colors = CardDefaults.cardColors(
-                        // Color destacado si el usuario tiene algún poder sobre el post
                         containerColor = if (canEdit || canDelete)
                             MaterialTheme.colorScheme.primaryContainer
                         else MaterialTheme.colorScheme.surfaceVariant
@@ -162,13 +155,7 @@ fun TopicDetailScreen(
                 OutlinedTextField(
                     value = replyText,
                     onValueChange = { nuevoValor ->
-                        if (replyText.isEmpty() && nuevoValor.isNotEmpty()) {
-                            isCurrentlyTyping = true // Marcamos que está escribiendo
-                            wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, true)
-                        } else if (replyText.isNotEmpty() && nuevoValor.isEmpty()) {
-                            isCurrentlyTyping = false // Marcamos que dejó de escribir
-                            wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, false)
-                        }
+
                         replyText = nuevoValor
                     },
                     placeholder = { Text("Escribe una respuesta...") },
@@ -178,16 +165,11 @@ fun TopicDetailScreen(
 
                 IconButton(onClick = {
                     if (replyText.isNotBlank()) {
-                        // 4. LIMPIAR ESTADO AL ENVIAR:
-                        // Como reseteamos el texto manualmente, debemos notificar el fin.
-                        isCurrentlyTyping = false
-                        wsViewModel?.notifyActivity(topicId, fixedTitleForThisSession, false)
-
                         viewModel.onSendPost(replyText, topicId)
                         replyText = ""
                     }
                 }) {
-                    Icon(Icons.Default.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }
@@ -196,12 +178,12 @@ fun TopicDetailScreen(
     // --- DIÁLOGO DE EDICIÓN ---
     if (showEditDialog && postToEdit != null) {
         AlertDialog(
-            onDismissRequest = { showEditDialog = false },
+            onDismissRequest = { },
             title = { Text("Editar mensaje") },
             text = {
                 OutlinedTextField(
                     value = editPostText,
-                    onValueChange = { editPostText = it },
+                    onValueChange = { },
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text("Mensaje") }
                 )
@@ -209,12 +191,11 @@ fun TopicDetailScreen(
             confirmButton = {
                 Button(onClick = {
                     viewModel.onEditPost(postToEdit!!.id, editPostText, topicId) {
-                        showEditDialog = false
                     }
                 }) { Text("GUARDAR") }
             },
             dismissButton = {
-                TextButton(onClick = { showEditDialog = false }) { Text("CANCELAR") }
+                TextButton(onClick = { }) { Text("CANCELAR") }
             }
         )
     }

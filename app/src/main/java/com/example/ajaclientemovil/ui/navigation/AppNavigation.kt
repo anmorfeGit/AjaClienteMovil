@@ -4,38 +4,90 @@ import DirectMessageScreen
 import android.app.Application
 import android.content.Context
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Dvr
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.ajaclientemovil.data.ForumEntityDTO
-import com.example.ajaclientemovil.data.network.AjaApiService
 import com.example.ajaclientemovil.network.NetworkManager
 import com.example.ajaclientemovil.network.SessionManager
 import com.example.ajaclientemovil.repository.DirectMessageRepository
-import com.example.ajaclientemovil.ui.screens.*
+import com.example.ajaclientemovil.ui.screens.AdminListScreen
+import com.example.ajaclientemovil.ui.screens.ChatDetailScreen
+import com.example.ajaclientemovil.ui.screens.ForumTopicsScreen
+import com.example.ajaclientemovil.ui.screens.HomeScreen
+import com.example.ajaclientemovil.ui.screens.LoginScreen
+import com.example.ajaclientemovil.ui.screens.MyProfileScreen
+import com.example.ajaclientemovil.ui.screens.RegisterScreen
+import com.example.ajaclientemovil.ui.screens.StatusServerScreen
+import com.example.ajaclientemovil.ui.screens.TopicDetailScreen
+import com.example.ajaclientemovil.ui.screens.UserListScreen
 import com.example.ajaclientemovil.ui.viewmodel.ChatViewModel
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 import com.example.ajaclientemovil.ui.viewmodel.LoginViewModel
-import kotlinx.coroutines.launch
 import com.example.ajaclientemovil.ui.viewmodel.LoginViewModelFactory
 import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModel
 import com.example.ajaclientemovil.ui.viewmodel.RegisterViewModelFactory
 import com.example.ajaclientemovil.ui.viewmodel.WebSocketViewModel
+import kotlinx.coroutines.launch
 
 /**
  * Estructura base de navegación de la aplicación.
@@ -48,7 +100,7 @@ fun AppNavigation(context: Context) {
     val navController = rememberNavController()
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val application = context.applicationContext as android.app.Application
+    val application = context.applicationContext as Application
     val apiService = NetworkManager.apiService
 
     val userRepo = remember { com.example.ajaclientemovil.repository.UserRepository(apiService, context) }
@@ -136,7 +188,7 @@ fun AppNavigation(context: Context) {
                                 }
                             }
                         },
-                        onDeleteClick = { showDeleteConfirm = true }
+                        onDeleteClick = { }
                     )
                 }
             }
@@ -144,13 +196,12 @@ fun AppNavigation(context: Context) {
 
             if (showDeleteConfirm) {
                 AlertDialog(
-                    onDismissRequest = { showDeleteConfirm = false },
+                    onDismissRequest = { },
                     title = { Text("¿Eliminar tu cuenta?", fontWeight = FontWeight.Bold) },
                     text = { Text("Esta acción es permanente. Se borrarán todos tus datos y se cerrará la sesión.") },
                     confirmButton = {
                         Button(
                             onClick = {
-                                showDeleteConfirm = false
                                 homeViewModel.onDeleteAccountClicked {
                                     navController.navigate(Screen.Login.route) {
                                         popUpTo(0) { inclusive = true }
@@ -161,18 +212,18 @@ fun AppNavigation(context: Context) {
                         ) { Text("ELIMINAR") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showDeleteConfirm = false }) { Text("CANCELAR") }
+                        TextButton(onClick = { }) { Text("CANCELAR") }
                     }
                 )
             }
             if (showForumDialog) {
                 AlertDialog(
-                    onDismissRequest = { showForumDialog = false },
+                    onDismissRequest = { },
                     title = { Text(if (forumToEdit == null) "Nuevo Foro" else "Editar Foro") },
                     text = {
                         OutlinedTextField(
                             value = forumTitleText,
-                            onValueChange = { forumTitleText = it },
+                            onValueChange = { },
                             label = { Text("Título del foro") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -186,13 +237,11 @@ fun AppNavigation(context: Context) {
                                 } else {
                                     homeViewModel.onEditForum(forumToEdit!!.id!!,forumTitleText)
                                 }
-                                showForumDialog = false
-                                forumTitleText = ""
                             }
                         }) { Text("GUARDAR") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { showForumDialog = false }) { Text("CANCELAR") }
+                        TextButton(onClick = { }) { Text("CANCELAR") }
                     }
                 )
             }
@@ -248,12 +297,10 @@ fun AppNavigation(context: Context) {
                             onAddForum = {
                                 forumToEdit = null
                                 forumTitleText = ""
-                                showForumDialog = true
                             },
                             onEditForum = { forum ->
                                 forumToEdit = forum
                                 forumTitleText = forum.title
-                                showForumDialog = true
                             },
                             onDeleteForum = { id ->
                                 homeViewModel.onDeleteForum(id)
@@ -295,21 +342,28 @@ fun AppNavigation(context: Context) {
                         ForumTopicsScreen(
                             forumId = forumId,
                             viewModel = homeViewModel,
-                            onTopicClick = { topicId ->
-                                navController.navigate(Screen.TopicDetail.createRoute(topicId))
+                            onTopicClick = { topic ->
+                                navController.navigate(Screen.TopicDetail.createRoute(topic.id, topic.title))
                             }
                         )
                     }
+                    ///
                     composable(
-                        route = Screen.TopicDetail.route,
+                        route = Screen.TopicDetail.route, // Ahora es "topic_detail/{topicId}?title={title}"
                         arguments = listOf(
                             navArgument("topicId") { type = NavType.LongType },
-                            navArgument("title") { type = NavType.StringType; nullable = true }
+                            navArgument("title") {
+                                type = NavType.StringType
+                                nullable = true
+                                defaultValue = null
+                            }
                         )
                     ) { backStackEntry ->
                         val topicId = backStackEntry.arguments?.getLong("topicId") ?: -1L
+                        val topicTitle = backStackEntry.arguments?.getString("title")
                         TopicDetailScreen(
                             topicId = topicId,
+                            topicTitle = topicTitle,
                             viewModel = homeViewModel,
                             wsViewModel = wsViewModel
                         )
@@ -386,7 +440,7 @@ fun AppDrawerSheet(
         NavigationDrawerItem(
             label = { Text("Estado del Servidor") },
             selected = false,
-            icon = { Icon(Icons.Default.Dvr, null) }, // Icono de monitor/servidor
+            icon = { Icon(Icons.AutoMirrored.Filled.Dvr, null) }, // Icono de monitor/servidor
             onClick = { onNavigate(Screen.StatusServer.route) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
@@ -530,7 +584,7 @@ class ChatViewModelFactory(private val repository: DirectMessageRepository) : Vi
  * @return Factory personalizado.
  */
 class HomeViewModelFactory(
-    private val application: android.app.Application,
+    private val application: Application,
     private val userRepository: com.example.ajaclientemovil.repository.UserRepository,
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

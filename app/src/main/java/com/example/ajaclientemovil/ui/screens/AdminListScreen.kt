@@ -88,9 +88,7 @@ fun AdminListScreen(
                             },
                             trailingContent = {
                                 Row {
-                                    // --- BOTÓN DE MENSAJE ACTUALIZADO ---
                                     IconButton(onClick = {
-                                        // En lugar de abrir un diálogo, navegamos directamente
                                         onUserClick(user.id, user.username)
                                     }) {
                                         Icon(
@@ -101,7 +99,6 @@ fun AdminListScreen(
                                     }
 
                                     if (isAdmin) {
-                                        // Acción: Activar/Desactivar
                                         if (user.role != "ADMIN") {
                                             IconButton(onClick = { viewModel.onToggleUserStatus(user) }) {
                                                 Icon(
@@ -123,7 +120,6 @@ fun AdminListScreen(
                                             )
                                         }
 
-                                        // Acción: Eliminar
                                         IconButton(onClick = { viewModel.onDeleteUserByAdmin(user.id) }) {
                                             Icon(
                                                 imageVector = Icons.Default.Delete,

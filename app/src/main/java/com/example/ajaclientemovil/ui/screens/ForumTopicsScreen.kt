@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,7 +29,7 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 fun ForumTopicsScreen(
     forumId: Long,
     viewModel: HomeViewModel = viewModel(),
-    onTopicClick: (Long) -> Unit
+    onTopicClick: (TopicEntityDTO) -> Unit
 ) {
     val topics = remember { mutableStateListOf<TopicEntityDTO>() }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -61,7 +61,7 @@ fun ForumTopicsScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showCreateDialog = true },
+                onClick = { },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = Color.White
             ) {
@@ -103,10 +103,9 @@ fun ForumTopicsScreen(
                     items(topics) { topic ->
                         TopicItem(
                             topic = topic,
-                            // Usamos las dos funciones nuevas del ViewModel
                             canEdit = viewModel.canEditTopic(topic.userOwner.id),
                             canDelete = viewModel.canDeleteTopic(),
-                            onClick = { onTopicClick(topic.id) },
+                            onClick = { onTopicClick(topic) },
                             onEdit = {
                                 topicToEdit = topic
                                 editTitle = topic.title
@@ -125,7 +124,7 @@ fun ForumTopicsScreen(
         // --- Diálogo para crear un nuevo tema ---
         if (showCreateDialog) {
             AlertDialog(
-                onDismissRequest = { showCreateDialog = false },
+                onDismissRequest = { },
                 title = { Text("Nuevo Tema") },
                 text = {
                     Column {
@@ -145,8 +144,6 @@ fun ForumTopicsScreen(
                         onClick = {
                             if (newTopicTitle.isNotBlank()) {
                                 viewModel.onCreateTopic(newTopicTitle, forumId) {
-                                    showCreateDialog = false
-                                    newTopicTitle = ""
                                     refreshData()
                                 }
                             }
@@ -154,19 +151,19 @@ fun ForumTopicsScreen(
                     ) { Text("CREAR") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showCreateDialog = false }) { Text("CANCELAR") }
+                    TextButton(onClick = { }) { Text("CANCELAR") }
                 }
             )
         }
         // --- Diálogo para editar un tema ---
         if (showEditDialog && topicToEdit != null) {
             AlertDialog(
-                onDismissRequest = { showEditDialog = false },
+                onDismissRequest = { },
                 title = { Text("Editar Tema") },
                 text = {
                     OutlinedTextField(
                         value = editTitle,
-                        onValueChange = { editTitle = it },
+                        onValueChange = { },
                         label = { Text("Nuevo título") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -174,13 +171,12 @@ fun ForumTopicsScreen(
                 confirmButton = {
                     Button(onClick = {
                         viewModel.onEditTopic(topicToEdit!!.id, editTitle, forumId) {
-                            showEditDialog = false
                             refreshData() // Refrescamos la lista
                         }
                     }) { Text("GUARDAR") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showEditDialog = false }) { Text("CANCELAR") }
+                    TextButton(onClick = { }) { Text("CANCELAR") }
                 }
             )
         }
@@ -224,7 +220,7 @@ fun TopicItem(
                     }
                 }
 
-                Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
             }
         }
     )

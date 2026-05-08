@@ -73,34 +73,25 @@ class UserRepository(
      */
     suspend fun getAllUsers(): Result<List<UserEntityDTO>> {
         return try {
-            // 1. Recuperamos el token almacenado en SharedPreferences
             val token = SessionManager.getToken(context)
 
             if (token.isNullOrEmpty()) {
                 return Result.failure(Exception("Sesión expirada o no válida"))
             }
-
-            // 2. Realizamos la petición enviando el token en el formato que el servidor espera
             val response = apiService.getAllUsers("JWT_TOKEN=$token")
 
             if (response.isSuccessful && response.body() != null) {
                 val userListDto = response.body()!!
-
-                // 3. Verificamos el flag 'success' interno de la API de Alex
                 if (userListDto.success) {
-                    // Éxito total: devolvemos la lista de usuarios
                     Result.success(userListDto.message)
                 } else {
-                    // El servidor respondió pero success es false (ej: falta de permisos)
                     Result.failure(Exception("Error del servidor: Operación no permitida"))
                 }
             } else {
-                // Error HTTP (401 Unauthorized, 403 Forbidden, etc.)
                 val code = response.code()
                 Result.failure(Exception("Error de red (Código: $code)"))
             }
         } catch (e: Exception) {
-            // Error de infraestructura (servidor caído, sin internet)
             Result.failure(Exception("Error de conexión: ${e.localizedMessage}"))
         }
     }
@@ -243,6 +234,10 @@ class UserRepository(
         }
     }
 
+    /**
+     * Obtiene una lista de usuarios disponibles para ser añadidos a una conversación.
+     * @return [Result] con la lista de usuarios o una excepción en caso de error.
+     */
     suspend fun getUsersForDM(): Result<List<UserEntityDmDTO>> {
         val token = SessionManager.getToken(context) ?: throw Exception("Sesión expirada")
         val cookieHeader = "JWT_TOKEN=$token"

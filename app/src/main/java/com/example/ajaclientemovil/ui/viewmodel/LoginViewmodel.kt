@@ -47,7 +47,6 @@ class LoginViewModel(
      * @param onSuccess Callback que se ejecuta cuando el login es correcto para navegar al Home.
      */
     fun onLoginClicked(user: String, pass: String, onSuccess: () -> Unit) {
-        // Validación previa (Local)
         if (!validateFields(user, pass)) {
             errorMessage = "Por favor, rellena todos los campos"
             return
@@ -64,7 +63,6 @@ class LoginViewModel(
                 onSuccess()
             }
             result.onFailure { exception ->
-                // Aquí capturamos el mensaje dinámico que extrajo el NetworkManager
                 errorMessage = exception.message
             }
             isLoading = false

@@ -14,7 +14,6 @@ import com.example.ajaclientemovil.data.TopicEntityDTO
 import com.example.ajaclientemovil.data.UserEntityDTO
 import com.example.ajaclientemovil.data.UserEntityDmDTO
 import com.example.ajaclientemovil.network.SessionManager
-import com.example.ajaclientemovil.repository.DirectMessageRepository
 import com.example.ajaclientemovil.repository.ForumRepository
 import com.example.ajaclientemovil.repository.PostRepository
 import com.example.ajaclientemovil.repository.UserRepository
@@ -66,14 +65,6 @@ class HomeViewModel(
     var forumList by mutableStateOf<List<ForumEntityDTO>>(emptyList())
     private val postRepository = PostRepository(getApplication())
     var postList by mutableStateOf<List<PostEntityDTO>>(emptyList())
-    // Controla si el diálogo de mensaje rápido está visible
-    var showChatDialog by mutableStateOf(false)
-
-    // Almacena el usuario al que le vamos a escribir (se setea al pulsar el sobre)
-    var selectedUserForDM by mutableStateOf<UserEntityDTO?>(null)
-
-    // El texto del mensaje que se está escribiendo en el diálogo
-    var dmText by mutableStateOf("")
 
     // Lista que viene del servidor
     private var dmUserList = mutableStateListOf<UserEntityDmDTO>()
@@ -121,7 +112,6 @@ class HomeViewModel(
                 // Si va bien, volvemos a la pantalla de Login
                 onLogoutSuccess()
             } catch (e: Exception) {
-                // Para manejar errores de red aquí si queremos avisar al usuario
             } finally {
                 isLoading = false
             }
@@ -148,7 +138,7 @@ class HomeViewModel(
 
         viewModelScope.launch {
             isLoading = true
-            userRepository.updateProfile(username ?: "", email ?: "", password)
+            userRepository.updateProfile(username, email, password)
                 .onSuccess {
                     // Comprobamos si el nombre de usuario ha cambiado
                     if (oldUsername != username) {
@@ -336,7 +326,6 @@ class HomeViewModel(
     fun onDeleteForum(id: Long) {
         viewModelScope.launch {
             isLoading = true
-            // Aquí se "usa" la otra función
             val result = forumRepository.deleteForum(id)
 
             result.onSuccess {
@@ -465,17 +454,6 @@ class HomeViewModel(
                 .onSuccess { fetchPostsByTopic(topicId) } // Recargar el hilo
                 .onFailure { errorMessage = it.message }
         }
-    }
-
-    /**
-     * Comprueba si el usuario actual puede gestionar un mensaje.
-     * @param postUserId Identificador del autor del mensaje.
-     * @return True si el usuario puede gestionar el mensaje, False en caso contrario.
-     */
-    fun canManagePost(postUserId: Long): Boolean {
-        val currentUserId = SessionManager.getUser(getApplication())?.id
-        val isAdmin = SessionManager.getRole(getApplication()) == "ADMIN"
-        return isAdmin || currentUserId == postUserId
     }
 
 

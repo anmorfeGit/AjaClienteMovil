@@ -101,18 +101,10 @@ class ChatViewModel(private val dmRepository: DirectMessageRepository) : ViewMod
         }
     }
 
-    // Función para limpiar errores después de mostrarlos (ej. en un Snackbar)
     fun clearError() { errorMessage = null }
     fun clearChat() {
         activeMessages = emptyList()
         errorMessage = null
     }
 }
-class ChatViewModelFactory(
-    private val dmRepository: DirectMessageRepository
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        @Suppress("UNCHECKED_CAST")
-        return ChatViewModel(dmRepository) as T
-    }
-}
+

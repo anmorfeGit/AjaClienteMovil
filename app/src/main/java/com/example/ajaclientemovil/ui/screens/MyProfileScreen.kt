@@ -1,6 +1,12 @@
 package com.example.ajaclientemovil.ui.screens
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -8,7 +14,13 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,7 +28,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 
 /**
@@ -52,7 +63,7 @@ fun MyProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = viewModel.username ?: "Perfil",
+            text = viewModel.username,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold
         )
@@ -68,7 +79,7 @@ fun MyProfileScreen(
         // --- CAMPOS DE EDICIÓN ---
 
         OutlinedTextField(
-            value = viewModel.username ?: "",
+            value = viewModel.username,
             onValueChange = { viewModel.username = it },
             label = { Text("Nombre de usuario") },
             placeholder = { Text("Cerrará sesión si lo cambias") },
@@ -81,7 +92,7 @@ fun MyProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = viewModel.email ?: "",
+            value = viewModel.email,
             onValueChange = { viewModel.email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
@@ -109,7 +120,7 @@ fun MyProfileScreen(
 
         // --- CAMPO DE FECHA (SOLO LECTURA) ---
         OutlinedTextField(
-            value = viewModel.registerDate ?: "No disponible",
+            value = viewModel.registerDate,
             onValueChange = {}, // No hace nada al cambiar
             label = { Text("Fecha de Registro") },
             modifier = Modifier.fillMaxWidth(),
@@ -132,9 +143,7 @@ fun MyProfileScreen(
         Button(
             onClick = {
                 viewModel.onUpdateProfileClicked(
-                    onSuccess = {
-                        // Aquí podrías mostrar un mensaje de éxito
-                    },
+                    onSuccess = {},
                     onUsernameChanged = {
                         onLogout()
                     }

@@ -53,12 +53,18 @@ sealed class Screen(val route: String) {
      * Objeto que representa la pantalla de detalles de un tema.
      * @property route Ruta asociada a esta pantalla.
      */
-    object TopicDetail : Screen("topic_detail/{topicId}") {
-        /**
-         * Crea la ruta para el detalle de un tema.
-         * @param topicId Identificador único del tema.
-         */
-        fun createRoute(topicId: Long) = "topic_detail/$topicId"
+    ///
+    // Screen.kt
+    object TopicDetail : Screen("topic_detail/{topicId}?title={title}") {
+        fun createRoute(topicId: Long, topicTitle: String? = null): String {
+            val base = "topic_detail/$topicId"
+            return if (!topicTitle.isNullOrBlank()) {
+                val encodedTitle = android.net.Uri.encode(topicTitle)
+                "$base?title=$encodedTitle"
+            } else {
+                base
+            }
+        }
     }
 
     /**

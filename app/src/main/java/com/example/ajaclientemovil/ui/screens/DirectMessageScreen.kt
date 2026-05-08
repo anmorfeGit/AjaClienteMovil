@@ -146,7 +146,6 @@ fun ConversationItem(
         trailingContent = {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.Center) {
                 lastMessage?.dateTime?.let { dt ->
-                    // Formateo rápido: de "2026-05-01T19:07:36" a "19:07"
                     val time = dt.substringAfter("T").take(5)
                     Text(time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 }

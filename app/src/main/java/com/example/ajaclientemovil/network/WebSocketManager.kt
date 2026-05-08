@@ -61,12 +61,13 @@ class WebSocketManager(private val context: Context) {
             url,
             mapOf("Cookie" to "JWT_TOKEN=$token")
         )
+        mStompClient?.withServerHeartbeat(10000)?.withClientHeartbeat(10000)
 
         mStompClient!!.lifecycle().subscribe { lifecycleEvent ->
             when (lifecycleEvent.type) {
-                LifecycleEvent.Type.OPENED -> Log.d("STOMP", "✔ CONECTADO")
-                LifecycleEvent.Type.ERROR -> Log.e("STOMP", "❌ ERROR: ${lifecycleEvent.exception?.message}")
-                LifecycleEvent.Type.CLOSED -> Log.d("STOMP", "🔌 CERRADO")
+                LifecycleEvent.Type.OPENED -> Log.d("STOMP", "CONECTADO")
+                LifecycleEvent.Type.ERROR -> Log.e("STOMP", "ERROR: ${lifecycleEvent.exception?.message}")
+                LifecycleEvent.Type.CLOSED -> Log.d("STOMP", "CERRADO")
                 else -> {}
             }
         }
@@ -94,7 +95,7 @@ class WebSocketManager(private val context: Context) {
      */
     fun sendStatus(dto: NotifyStatusDTO, isStarting: Boolean) {
         if (mStompClient == null || !mStompClient!!.isConnected) {
-            Log.e("STOMP", "❌ Intento de enviar mensaje sin conexión activa")
+            Log.e("STOMP", "Intento de enviar mensaje sin conexión activa")
             return
         }
 
@@ -102,9 +103,9 @@ class WebSocketManager(private val context: Context) {
         val jsonPayload = gson.toJson(dto)
 
         mStompClient?.send(destination, jsonPayload)?.subscribe({
-            Log.d("STOMP", "✔ ENVÍO OK a $destination")
+            Log.d("STOMP", "ENVÍO OK a $destination")
         }, { error ->
-            Log.e("STOMP", "❌ FALLO ENVÍO: ${error.message}")
+            Log.e("STOMP", "FALLO ENVÍO: ${error.message}")
         })
     }
 

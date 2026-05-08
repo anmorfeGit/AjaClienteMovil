@@ -74,7 +74,6 @@ fun ChatDetailScreen(
         viewModel.fetchChatWithUser(otherUserId)
     }
 
-    // Efecto para hacer scroll al último mensaje cuando la lista cambie
     LaunchedEffect(viewModel.activeMessages.size) {
         if (viewModel.activeMessages.isNotEmpty()) {
             listState.animateScrollToItem(viewModel.activeMessages.size - 1)

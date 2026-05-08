@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  */
 class RegisterViewModel(
     application: Application,
-    private val userRepository: UserRepository // Inyectado por constructor
+    private val userRepository: UserRepository
 ) : AndroidViewModel(application) {
 
     var isLoading by mutableStateOf(false)
