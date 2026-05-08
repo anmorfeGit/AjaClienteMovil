@@ -41,57 +41,45 @@ fun DirectMessageScreen(
         viewModel.fetchAllConversations()
     }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("MIS MENSAJES", fontWeight = FontWeight.ExtraBold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White
-                )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        if (viewModel.isLoading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else if (viewModel.conversations.isEmpty()) {
+            Text(
+                "No tienes conversaciones aún",
+                modifier = Modifier.align(Alignment.Center),
+                color = Color.Gray
             )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            if (viewModel.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (viewModel.conversations.isEmpty()) {
-                Text(
-                    "No tienes conversaciones aún",
-                    modifier = Modifier.align(Alignment.Center),
-                    color = Color.Gray
-                )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                    items(viewModel.conversations) { chat ->
-                        ConversationItem(
-                            chat = chat,
-                            currentUserId = currentUserId,
-                            isAdmin = isAdmin,
-                            onClick = onConversationClick,
-                            onDelete = { id -> viewModel.deleteChat(id) }
-                        )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            thickness = 0.5.dp,
-                            color = Color.LightGray
-                        )
-                    }
+        } else {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                items(viewModel.conversations) { chat ->
+                    ConversationItem(
+                        chat = chat,
+                        currentUserId = currentUserId,
+                        isAdmin = isAdmin,
+                        onClick = onConversationClick,
+                        onDelete = { id -> viewModel.deleteChat(id) }
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = 0.5.dp,
+                        color = Color.LightGray
+                    )
                 }
             }
-
-            viewModel.errorMessage?.let { error ->
-                Snackbar(
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ) { Text(error) }
-            }
         }
+
+        viewModel.errorMessage?.let { error ->
+            Snackbar(
+                modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer
+            ) { Text(error) }
+        }
+
     }
 }
 
@@ -114,6 +102,7 @@ fun ConversationItem(
     val otherUser = chat.participants.find { it.id != currentUserId }
     val otherUserName = otherUser?.username ?: "Usuario"
     val otherUserId = otherUser?.id ?: -1L
+    val isParticipant = chat.participants.any { it.id == currentUserId }
 
     val lastMessage = chat.messages.lastOrNull()
 
@@ -149,7 +138,7 @@ fun ConversationItem(
                     val time = dt.substringAfter("T").take(5)
                     Text(time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 }
-                if(isAdmin){
+                if(isAdmin || isParticipant){
                     IconButton(onClick = { onDelete(otherUserId) }) {
                         Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red.copy(alpha = 0.5f))
                     }
