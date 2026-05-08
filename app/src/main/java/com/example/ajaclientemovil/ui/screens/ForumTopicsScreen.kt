@@ -171,7 +171,7 @@ fun ForumTopicsScreen(
                 confirmButton = {
                     Button(onClick = {
                         viewModel.onEditTopic(topicToEdit!!.id, editTitle, forumId) {
-                            refreshData() // Refrescamos la lista
+                            refreshData()
                         }
                     }) { Text("GUARDAR") }
                 },
@@ -194,8 +194,8 @@ fun ForumTopicsScreen(
 @Composable
 fun TopicItem(
     topic: TopicEntityDTO,
-    canEdit: Boolean,    // Cambiado de canManage
-    canDelete: Boolean,  // Nuevo parámetro
+    canEdit: Boolean,
+    canDelete: Boolean,
     onClick: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -206,14 +206,12 @@ fun TopicItem(
         supportingContent = { Text("Por ${topic.userOwner.username}") },
         trailingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // El lápiz aparece para el dueño y el admin
                 if (canEdit) {
                     IconButton(onClick = onEdit) {
                         Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color.Gray)
                     }
                 }
 
-                // La papelera aparece SOLO para el admin
                 if (canDelete) {
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Delete, contentDescription = "Borrar", tint = Color.Red)

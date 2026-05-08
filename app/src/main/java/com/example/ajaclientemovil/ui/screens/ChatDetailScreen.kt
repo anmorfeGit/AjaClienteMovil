@@ -190,9 +190,9 @@ fun ChatBubble(message: MessageContentDTO, isMine: Boolean) {
     val bubbleColor = if (isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
     val textColor = if (isMine) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
     val shape = if (isMine) {
-        RoundedCornerShape(16.dp, 16.dp, 0.dp, 16.dp) // Punta abajo-derecha
+        RoundedCornerShape(16.dp, 16.dp, 0.dp, 16.dp)
     } else {
-        RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp) // Punta abajo-izquierda
+        RoundedCornerShape(16.dp, 16.dp, 16.dp, 0.dp)
     }
 
     Column(

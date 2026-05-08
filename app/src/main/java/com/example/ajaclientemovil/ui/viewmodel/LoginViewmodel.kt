@@ -24,7 +24,7 @@ class LoginViewModel(
 
 
     var isLoading by mutableStateOf(false)
-        private set // Solo el ViewModel puede cambiar este valor
+        private set
 
     var errorMessage by mutableStateOf<String?>(null)
         private set
@@ -55,8 +55,6 @@ class LoginViewModel(
         viewModelScope.launch {
             isLoading = true
             errorMessage = null
-
-            // Llamada al repositorio
             val result = userRepository.performLogin(user, pass)
 
             result.onSuccess {

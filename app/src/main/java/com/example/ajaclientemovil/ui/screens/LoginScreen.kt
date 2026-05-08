@@ -82,7 +82,6 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Un icono grande para reforzar la identidad visual
                 Icon(
                     imageVector = Icons.Default.AccountCircle,
                     contentDescription = null,
@@ -107,7 +106,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // Campo de Usuario con Icono
                 OutlinedTextField(
                     value = username,
                     onValueChange = {
@@ -118,7 +116,7 @@ fun LoginScreen(
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    shape = MaterialTheme.shapes.large, // Bordes redondeados modernos
+                    shape = MaterialTheme.shapes.large,
                     enabled = !viewModel.isLoading
                 )
 
@@ -146,7 +144,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Gestión de estados
                 if (viewModel.errorMessage != null) {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),

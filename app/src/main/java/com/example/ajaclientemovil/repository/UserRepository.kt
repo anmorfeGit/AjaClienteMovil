@@ -16,8 +16,8 @@ import com.example.ajaclientemovil.network.SessionManager
  * @param context El contexto de la aplicación necesario para acceder a archivos.
  */
 class UserRepository(
-    private val apiService: AjaApiService, // El primer argumento que pasas en AppNavigation
-    private val context: Context           // El segundo argumento
+    private val apiService: AjaApiService,
+    private val context: Context
 ){
 
 
@@ -35,11 +35,9 @@ class UserRepository(
         val (userDto, error, token) = NetworkManager.login(user, pass)
 
         return if (userDto != null && token != null) {
-            // Si el login es exitoso (success: true), persistimos la sesión
             SessionManager.saveSession(context, token, userDto)
             Result.success(userDto)
         } else {
-            // Si falla, devolvemos el error (el String que Alex manda en 'message')
             Result.failure(Exception(error ?: "Error desconocido"))
         }
     }

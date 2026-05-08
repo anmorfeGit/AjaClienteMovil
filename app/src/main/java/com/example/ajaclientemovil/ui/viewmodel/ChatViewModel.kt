@@ -78,7 +78,6 @@ class ChatViewModel(private val dmRepository: DirectMessageRepository) : ViewMod
         viewModelScope.launch {
             dmRepository.sendMessage(otherUserId, text)
                 .onSuccess {
-                    // Refrescamos los mensajes para que aparezca el nuevo
                     fetchChatWithUser(otherUserId)
                 }
                 .onFailure {
@@ -96,7 +95,7 @@ class ChatViewModel(private val dmRepository: DirectMessageRepository) : ViewMod
             dmRepository.deleteConversation(otherUserId)
                 .onSuccess {
                     fetchAllConversations()
-                    activeMessages = emptyList() // Limpiamos si estábamos dentro del chat
+                    activeMessages = emptyList()
                 }
         }
     }

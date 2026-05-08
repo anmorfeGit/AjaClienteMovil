@@ -100,7 +100,6 @@ fun TopicDetailScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(viewModel.postList) { post ->
-                // Permisos calculados por post
                 val canEdit = viewModel.canEditPost(post.user!!.id)
                 val canDelete = viewModel.canDeletePost(post.user.id)
 

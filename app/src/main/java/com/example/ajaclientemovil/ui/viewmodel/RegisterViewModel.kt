@@ -35,7 +35,7 @@ class RegisterViewModel(
      * @param onSuccess Callback que se ejecuta cuando el registro es exitoso.
      */
     fun onRegisterClicked(user: String, email: String, pass: String, confirmPass: String, onSuccess: () -> Unit) {
-        // Validaciones locales para campos obligatorios
+
         if (user.isBlank() || email.isBlank() || pass.isBlank()) {
             errorMessage = "Todos los campos son obligatorios"
             return

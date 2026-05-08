@@ -228,7 +228,7 @@ data class MessageContentDTO(
  */
 data class DirectMessageChatEntity(
     val id: Long,
-    val participants: List<UserEntityDTO>, // Reutilizamos tu UserEntityDTO
+    val participants: List<UserEntityDTO>,
     val messages: List<MessageContentDTO>
 )
 

@@ -48,7 +48,6 @@ fun StatusServerScreen(viewModel: WebSocketViewModel) {
                 }
             } else {
                 LazyColumn {
-                    // Usamos una clave (key) para que Compose gestione mejor la lista dinámica
                     items(viewModel.typingUsers) { user ->
                         ListItem(
                             headlineContent = { Text(user.username) },

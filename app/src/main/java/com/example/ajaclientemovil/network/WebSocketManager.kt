@@ -18,7 +18,7 @@ class WebSocketManager(private val context: Context) {
     private val gson = Gson()
     private var mStompClient: StompClient? = null
 
-    // Guardamos la suscripción para poder liberarla si fuera necesario
+
     private var statusSubscription: io.reactivex.disposables.Disposable? = null
 
     /**

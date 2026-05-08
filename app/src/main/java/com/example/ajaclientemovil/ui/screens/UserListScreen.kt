@@ -126,7 +126,6 @@ fun UserContactItem(
             )
         },
         leadingContent = {
-            // Icono estático de usuario
             Icon(
                 imageVector = Icons.Default.AccountCircle,
                 contentDescription = null,
@@ -135,7 +134,6 @@ fun UserContactItem(
             )
         },
         trailingContent = {
-            // El sobre para indicar que es para chatear
             Icon(
                 imageVector = Icons.Default.Email,
                 contentDescription = "Enviar mensaje",

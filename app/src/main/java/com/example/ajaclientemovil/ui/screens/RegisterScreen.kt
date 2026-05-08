@@ -51,7 +51,7 @@ fun RegisterScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(gradientBackground)) {
         Scaffold(
-            containerColor = Color.Transparent, // Clave para ver el gradiente
+            containerColor = Color.Transparent,
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text("CREAR CUENTA", fontWeight = FontWeight.Bold) },

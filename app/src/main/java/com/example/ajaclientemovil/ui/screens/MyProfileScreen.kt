@@ -121,12 +121,12 @@ fun MyProfileScreen(
         // --- CAMPO DE FECHA (SOLO LECTURA) ---
         OutlinedTextField(
             value = viewModel.registerDate,
-            onValueChange = {}, // No hace nada al cambiar
+            onValueChange = {},
             label = { Text("Fecha de Registro") },
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = { Icon(Icons.Default.DateRange, null) },
-            readOnly = true, // Evita que se pueda escribir
-            enabled = false, // Lo pone en un tono grisáceo para indicar que es informativo
+            readOnly = true,
+            enabled = false,
             shape = MaterialTheme.shapes.large,
             colors = OutlinedTextFieldDefaults.colors(
                 disabledTextColor = MaterialTheme.colorScheme.onSurface,

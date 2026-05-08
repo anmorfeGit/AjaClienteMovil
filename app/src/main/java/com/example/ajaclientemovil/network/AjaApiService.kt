@@ -96,7 +96,7 @@ interface AjaApiService {
      * @return Una [Response] con el estado de la actualización. El servidor retornará
      * un código 200 OK si la persistencia fue exitosa o 403 Forbidden si el token es inválido.
      */
-    @PUT("/api/user") // Quitamos el /{id}
+    @PUT("/api/user")
     suspend fun updateUser(
         @Header("Cookie") token: String,
         @Body user: UserEntityDTO
@@ -370,7 +370,8 @@ interface AjaApiService {
     suspend fun sendDirectMessage(
         @Header("Cookie") token: String,
         @Body newMessage: DirectMessageNewDTO
-    ): Response<Map<String, Any>> // Usamos Map para manejar respuestas dinámicas del backend
+    ): Response<Map<String, Any>>
+
 
     /**
      * Obtiene todas las conversaciones del usuario actual.
@@ -414,7 +415,7 @@ interface AjaApiService {
      * GET /api/user/dm
      * @param token Cadena de autenticación en formato "JWT_TOKEN=valor".
      */
-    @GET("api/user/dm") // Ajusta la ruta si falta el slash inicial
+    @GET("api/user/dm")
     suspend fun getUsersForDM(
         @Header("Cookie") token: String,
     ): Response<ApiResponseDM>

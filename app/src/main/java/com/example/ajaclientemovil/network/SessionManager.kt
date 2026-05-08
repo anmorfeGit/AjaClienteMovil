@@ -121,7 +121,7 @@ object SessionManager {
             email = prefs.getString(KEY_EMAIL, "") ?: "",
             role = prefs.getString(KEY_USER_ROLE, "USER") ?: "USER",
             isActive = true,
-            registerDate = prefs.getString(KEY_REGISTER_DATE, null) // <--- Recuperamos
+            registerDate = prefs.getString(KEY_REGISTER_DATE, null)
         )
     }
 

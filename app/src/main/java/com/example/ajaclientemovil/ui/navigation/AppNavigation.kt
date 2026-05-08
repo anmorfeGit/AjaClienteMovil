@@ -347,9 +347,9 @@ fun AppNavigation(context: Context) {
                             }
                         )
                     }
-                    ///
+
                     composable(
-                        route = Screen.TopicDetail.route, // Ahora es "topic_detail/{topicId}?title={title}"
+                        route = Screen.TopicDetail.route,
                         arguments = listOf(
                             navArgument("topicId") { type = NavType.LongType },
                             navArgument("title") {
@@ -440,7 +440,8 @@ fun AppDrawerSheet(
         NavigationDrawerItem(
             label = { Text("Estado del Servidor") },
             selected = false,
-            icon = { Icon(Icons.AutoMirrored.Filled.Dvr, null) }, // Icono de monitor/servidor
+            icon = { Icon(Icons.AutoMirrored.Filled.Dvr, null) },
+
             onClick = { onNavigate(Screen.StatusServer.route) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )

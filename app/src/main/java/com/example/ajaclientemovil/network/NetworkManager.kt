@@ -40,25 +40,22 @@ object NetworkManager {
      * Basado en la implementación sugerida para el servidor AJA (ignorar SSLContext).
      */
     private fun getUnsafeOkHttpClient(): OkHttpClient {
-        // Creamos un gestor de confianza que no valida la cadena de certificados
         val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
             override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
             override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
             override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
         })
 
-        // Instalamos el gestor de confianza en un contexto SSL de tipo TLS
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, SecureRandom())
 
-        // Añadimos un interceptor para ver las peticiones en el Logcat (Consola)
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
         return OkHttpClient.Builder()
             .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier { _, _ -> true } // Permite dominios que no coincidan con el certificado
+            .hostnameVerifier { _, _ -> true }
             .addInterceptor(logging)
             .build()
     }

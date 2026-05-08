@@ -33,23 +33,16 @@ class HomeViewModel(
 ) : AndroidViewModel(application) {
 
 
-    // Datos del usuario actual para la UI
     var username by mutableStateOf(SessionManager.getUsername(application))
     var userRole by mutableStateOf(SessionManager.getRole(application))
     var email by mutableStateOf(SessionManager.getEmail(application))
     var registerDate by mutableStateOf(SessionManager.getRegisterDate(application))
-    var password by mutableStateOf("") // Campo vacío para edición
-
-    // Estado para la lista de usuarios (solo para ADMIN)
+    var password by mutableStateOf("")
     var userList by mutableStateOf<List<UserEntityDTO>>(emptyList())
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
     var userId by mutableStateOf(SessionManager.getUser(application)?.id ?: -1L)
-    // En HomeViewModel.kt
 
-
-
-    // Esta lista se calcula automáticamente cada vez que cambia 'searchQuery' o 'userList'
     val filteredUserList: List<UserEntityDTO>
         get() {
             return if (searchQuery.isEmpty()) {
@@ -66,10 +59,8 @@ class HomeViewModel(
     private val postRepository = PostRepository(getApplication())
     var postList by mutableStateOf<List<PostEntityDTO>>(emptyList())
 
-    // Lista que viene del servidor
     private var dmUserList = mutableStateListOf<UserEntityDmDTO>()
 
-    // Lista que se muestra en pantalla (filtrada)
     var filteredDMList = mutableStateListOf<UserEntityDmDTO>()
         private set
 
@@ -106,10 +97,7 @@ class HomeViewModel(
         isLoading = true
         viewModelScope.launch {
             try {
-                // El repositorio se encarga de la red y lo local
                 userRepository.performLogout()
-
-                // Si va bien, volvemos a la pantalla de Login
                 onLogoutSuccess()
             } catch (e: Exception) {
             } finally {
@@ -133,21 +121,18 @@ class HomeViewModel(
             return
         }
 
-        val oldUsername = SessionManager.getUsername(getApplication()) // Guardamos el nombre actual
+        val oldUsername = SessionManager.getUsername(getApplication())
         errorMessage = null
 
         viewModelScope.launch {
             isLoading = true
             userRepository.updateProfile(username, email, password)
                 .onSuccess {
-                    // Comprobamos si el nombre de usuario ha cambiado
                     if (oldUsername != username) {
-                        // Si ha cambiado, cerramos sesión localmente y en el servidor
                         userRepository.performLogout()
                         password = ""
-                        onUsernameChanged() // Este callback nos llevará al Login
+                        onUsernameChanged()
                     } else {
-                        // Si solo cambió el email, refrescamos datos y seguimos en la pantalla
                         refreshSessionData()
                         password = ""
                         onSuccess()
@@ -200,9 +185,8 @@ class HomeViewModel(
      */
     fun onToggleUserStatus(user: UserEntityDTO) {
         viewModelScope.launch {
-            // Si el usuario está activo, lo deshabilitamos, y viceversa
             userRepository.toggleUserStatus(user.id, !user.isActive)
-                .onSuccess { fetchUsers() } // Recargamos la lista
+                .onSuccess { fetchUsers() }
                 .onFailure { errorMessage = it.message }
         }
     }
@@ -214,7 +198,7 @@ class HomeViewModel(
     fun onDeleteUserByAdmin(userId: Long) {
         viewModelScope.launch {
             userRepository.deleteUser(userId)
-                .onSuccess { fetchUsers() } // Recargamos la lista
+                .onSuccess { fetchUsers() }
                 .onFailure { errorMessage = it.message }
         }
     }
@@ -276,7 +260,7 @@ class HomeViewModel(
             val result = forumRepository.saveForum(ForumEntityDTO(title = title), isEdit = false)
 
             result.onSuccess {
-                fetchForums() // Recarga la lista para que se vea el cambio
+                fetchForums()
             }.onFailure { e ->
                 errorMessage = "Error al crear: ${e.message}"
             }
@@ -301,13 +285,11 @@ class HomeViewModel(
             isLoading = true
             errorMessage = null
 
-            // Creamos el DTO con el ID existente y el nuevo título
             val forumDto = ForumEntityDTO(id = id, title = newTitle)
 
             val result = forumRepository.saveForum(forumDto, isEdit = true)
 
             result.onSuccess {
-                // Si el servidor responde OK, refrescamos la lista del Drawer
                 fetchForums()
             }.onFailure { e ->
                 errorMessage = "Error al editar el foro: ${e.message}"
@@ -382,7 +364,7 @@ class HomeViewModel(
         viewModelScope.launch {
             isLoading = true
             forumRepository.createTopic(title, forumId)
-                .onSuccess { onSuccess(); fetchForums() } // Refrescamos
+                .onSuccess { onSuccess(); fetchForums() }
                 .onFailure { errorMessage = it.message }
             isLoading = false
         }
@@ -429,7 +411,6 @@ class HomeViewModel(
     fun onEditTopic(id: Long, newTitle: String, forumId: Long, onSuccess: () -> Unit) {
         viewModelScope.launch {
             isLoading = true
-            // El servidor pide currentForumId y newForumId. Como no lo cambiamos de foro, usamos el mismo.
             val editData = TopicEditDTO(id, newTitle, forumId, forumId)
             forumRepository.editTopic(editData)
                 .onSuccess {
@@ -490,7 +471,7 @@ class HomeViewModel(
             isLoading = true
             postRepository.deletePost(postId)
                 .onSuccess {
-                    fetchPostsByTopic(topicId) // Refresca la lista
+                    fetchPostsByTopic(topicId)
                 }
                 .onFailure { errorMessage = "No se pudo eliminar: ${it.message}" }
             isLoading = false
@@ -529,14 +510,9 @@ class HomeViewModel(
             isLoading = true
             userRepository.getUsersForDM()
                 .onSuccess { users ->
-                    // Usamos una actualización limpia
                     dmUserList.clear()
                     dmUserList.addAll(users)
-
-                    // IMPORTANTE: Asegúrate de que applyDMFilter()
-                    // se ejecute DESPUÉS de que dmUserList tenga datos
                     applyDMFilter()
-
                     android.util.Log.d("DM_DEBUG", "Lista cargada: ${dmUserList.size} usuarios")
                 }
                 .onFailure { e ->
