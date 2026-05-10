@@ -29,7 +29,7 @@ import com.example.ajaclientemovil.ui.viewmodel.HomeViewModel
 fun ForumTopicsScreen(
     forumId: Long,
     viewModel: HomeViewModel = viewModel(),
-    onTopicClick: (TopicEntityDTO) -> Unit
+    onTopicClick: (Long, String?) -> Unit
 ) {
     val topics = remember { mutableStateListOf<TopicEntityDTO>() }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -39,11 +39,6 @@ fun ForumTopicsScreen(
     var topicToEdit by remember { mutableStateOf<TopicEntityDTO?>(null) }
     var editTitle by remember { mutableStateOf("") }
 
-    /**
-     * Actualiza la lista de temas y el título del foro.
-     * @param fetchedTopics Lista de temas actualizados.
-     * @param title Título del foro.
-     */
     fun refreshData() {
         viewModel.fetchTopicsByForum(forumId) { fetchedTopics ->
             topics.clear()
@@ -54,58 +49,33 @@ fun ForumTopicsScreen(
         }
     }
 
-    LaunchedEffect(forumId) {
-        refreshData()
-    }
+    LaunchedEffect(forumId) { refreshData() }
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Crear Tema")
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Cabecera de la pantalla
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        Column(modifier = Modifier.fillMaxSize()) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = forumTitle,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${topics.size} temas disponibles",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(forumTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text("${topics.size} temas disponibles", style = MaterialTheme.typography.bodySmall)
                 }
             }
 
             if (topics.isEmpty() && !viewModel.isLoading) {
-                // Estado vacío
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text("No hay temas en este foro. ¡Sé el primero en crear uno!")
                 }
             } else {
-                // Listado de temas
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(topics) { topic ->
                         TopicItem(
                             topic = topic,
                             canEdit = viewModel.canEditTopic(topic.userOwner.id),
                             canDelete = viewModel.canDeleteTopic(),
-                            onClick = { onTopicClick(topic) },
+                            onClick = { onTopicClick(topic.id, topic.title) },
                             onEdit = {
                                 topicToEdit = topic
                                 editTitle = topic.title
@@ -121,10 +91,20 @@ fun ForumTopicsScreen(
             }
         }
 
-        // --- Diálogo para crear un nuevo tema ---
+        FloatingActionButton(
+            onClick = { showCreateDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = Color.White
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Crear Tema")
+        }
+
         if (showCreateDialog) {
             AlertDialog(
-                onDismissRequest = { },
+                onDismissRequest = { showCreateDialog = false },
                 title = { Text("Nuevo Tema") },
                 text = {
                     Column {
@@ -140,30 +120,30 @@ fun ForumTopicsScreen(
                     }
                 },
                 confirmButton = {
-                    Button(
-                        onClick = {
-                            if (newTopicTitle.isNotBlank()) {
-                                viewModel.onCreateTopic(newTopicTitle, forumId) {
-                                    refreshData()
-                                }
+                    Button(onClick = {
+                        if (newTopicTitle.isNotBlank()) {
+                            viewModel.onCreateTopic(newTopicTitle, forumId) {
+                                showCreateDialog = false
+                                newTopicTitle = ""
+                                refreshData()
                             }
                         }
-                    ) { Text("CREAR") }
+                    }) { Text("CREAR") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { }) { Text("CANCELAR") }
+                    TextButton(onClick = { showCreateDialog = false }) { Text("CANCELAR") }
                 }
             )
         }
-        // --- Diálogo para editar un tema ---
+
         if (showEditDialog && topicToEdit != null) {
             AlertDialog(
-                onDismissRequest = { },
+                onDismissRequest = { showEditDialog = false },
                 title = { Text("Editar Tema") },
                 text = {
                     OutlinedTextField(
                         value = editTitle,
-                        onValueChange = { },
+                        onValueChange = { editTitle = it },
                         label = { Text("Nuevo título") },
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -171,12 +151,13 @@ fun ForumTopicsScreen(
                 confirmButton = {
                     Button(onClick = {
                         viewModel.onEditTopic(topicToEdit!!.id, editTitle, forumId) {
+                            showEditDialog = false
                             refreshData()
                         }
                     }) { Text("GUARDAR") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { }) { Text("CANCELAR") }
+                    TextButton(onClick = { showEditDialog = false }) { Text("CANCELAR") }
                 }
             )
         }

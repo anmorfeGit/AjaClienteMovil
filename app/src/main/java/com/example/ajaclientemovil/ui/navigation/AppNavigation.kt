@@ -188,7 +188,7 @@ fun AppNavigation(context: Context) {
                                 }
                             }
                         },
-                        onDeleteClick = { }
+                        onDeleteClick = { showDeleteConfirm = true}
                     )
                 }
             }
@@ -196,7 +196,7 @@ fun AppNavigation(context: Context) {
 
             if (showDeleteConfirm) {
                 AlertDialog(
-                    onDismissRequest = { },
+                    onDismissRequest = { showDeleteConfirm = false},
                     title = { Text("¿Eliminar tu cuenta?", fontWeight = FontWeight.Bold) },
                     text = { Text("Esta acción es permanente. Se borrarán todos tus datos y se cerrará la sesión.") },
                     confirmButton = {
@@ -206,13 +206,14 @@ fun AppNavigation(context: Context) {
                                     navController.navigate(Screen.Login.route) {
                                         popUpTo(0) { inclusive = true }
                                     }
+                                    showDeleteConfirm = false
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                         ) { Text("ELIMINAR") }
                     },
                     dismissButton = {
-                        TextButton(onClick = { }) { Text("CANCELAR") }
+                        TextButton(onClick = { showDeleteConfirm = false }) { Text("CANCELAR") }
                     }
                 )
             }
@@ -223,7 +224,7 @@ fun AppNavigation(context: Context) {
                     text = {
                         OutlinedTextField(
                             value = forumTitleText,
-                            onValueChange = { },
+                            onValueChange = { forumTitleText=it},
                             label = { Text("Título del foro") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -237,6 +238,8 @@ fun AppNavigation(context: Context) {
                                 } else {
                                     homeViewModel.onEditForum(forumToEdit!!.id!!,forumTitleText)
                                 }
+                                showForumDialog = false
+                                forumTitleText = ""
                             }
                         }) { Text("GUARDAR") }
                     },
@@ -297,10 +300,12 @@ fun AppNavigation(context: Context) {
                             onAddForum = {
                                 forumToEdit = null
                                 forumTitleText = ""
+                                showForumDialog = true
                             },
                             onEditForum = { forum ->
                                 forumToEdit = forum
                                 forumTitleText = forum.title
+                                showForumDialog = true
                             },
                             onDeleteForum = { id ->
                                 homeViewModel.onDeleteForum(id)
@@ -342,8 +347,8 @@ fun AppNavigation(context: Context) {
                         ForumTopicsScreen(
                             forumId = forumId,
                             viewModel = homeViewModel,
-                            onTopicClick = { topic ->
-                                navController.navigate(Screen.TopicDetail.createRoute(topic.id, topic.title))
+                            onTopicClick = { topicId, topicTitle ->
+                                navController.navigate(Screen.TopicDetail.createRoute(topicId, topicTitle))
                             }
                         )
                     }
